@@ -27,9 +27,15 @@
     <ClInclude Include="MyEngine.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="Appbase.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MyEngine.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Appbase.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
@@ -45,5 +51,9 @@
     <Image Include="MyEngine.ico">
       <Filter>리소스 파일</Filter>
     </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="VS.hlsl" />
+    <FxCompile Include="PS.hlsl" />
   </ItemGroup>
 </Project>

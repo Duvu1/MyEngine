@@ -13,3 +13,11 @@
 #include <malloc.h>
 #include <memory.h>
 #include <tchar.h>
+
+#include <iostream>
+#include <d3d11.h>
+#include <wrl.h> // ComPtr
+
+#include <vector>
+
+using namespace Microsoft::WRL;
