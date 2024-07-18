@@ -19,6 +19,7 @@ public:
     struct Vertex
     {
         Vec4 pos;
+        Vec4 color;
         Vec2 uv;
     };
 
@@ -141,10 +142,11 @@ public:
         D3D11_INPUT_ELEMENT_DESC inputLayout[] = 
         {
             {"POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
-            {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 16, D3D11_INPUT_PER_VERTEX_DATA, 0},
+            {"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 16, D3D11_INPUT_PER_VERTEX_DATA, 0},
+            {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 32, D3D11_INPUT_PER_VERTEX_DATA, 0},
         };
 
-        m_device->CreateInputLayout(inputLayout, 2, vertexBlob->GetBufferPointer(), vertexBlob->GetBufferSize(), m_inputLayout.GetAddressOf());
+        m_device->CreateInputLayout(inputLayout, 3, vertexBlob->GetBufferPointer(), vertexBlob->GetBufferSize(), m_inputLayout.GetAddressOf());
         m_context->IASetInputLayout(m_inputLayout.Get());
 
         //////////////////////////
@@ -168,9 +170,9 @@ public:
         {
             const std::vector<Vertex> vertices =
             {
-                { { -1.0f, -1.0f, 0.0f, 1.0f }, { 0.0f,  1.0f } },
-                { {  1.0f, -1.0f, 0.0f, 1.0f }, { 1.0f,  1.0f } },
-                { {  0.0f,  1.0f, 0.0f, 1.0f }, { 0.5f, -1.0f } },
+                { { -1.0f, -1.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f }, { 0.0f,  1.0f } },
+                { {  1.0f, -1.0f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f }, { 1.0f,  1.0f } },
+                { {  0.0f,  1.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f }, { 0.5f, -1.0f } },
             };
 
             D3D11_BUFFER_DESC bufferDesc;
@@ -178,6 +180,7 @@ public:
             bufferDesc.ByteWidth = UINT(sizeof(Vertex) * vertices.size());             // size is the VERTEX struct * 3
             bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;       // use as a vertex buffer
             bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;    // allow CPU to write in buffer
+            bufferDesc.MiscFlags = 0;
             bufferDesc.StructureByteStride = sizeof(Vertex);
 
             D3D11_SUBRESOURCE_DATA vertexBufferData = { 0, };
@@ -208,6 +211,7 @@ public:
             bufferDesc.ByteWidth = UINT(sizeof(uint16_t) * indices.size());
             bufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;       // use as a vertex buffer
             bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;    // allow CPU to write in buffer
+            bufferDesc.MiscFlags = 0;
             bufferDesc.StructureByteStride = sizeof(uint16_t);
 
             D3D11_SUBRESOURCE_DATA indexBufferData = { 0 };
@@ -226,7 +230,7 @@ public:
 
     void Render()
     {
-        float initColor[4] = { 0.0f, 0.5f, 0.5f, 1.0f };
+        float initColor[4] = { 0.5f, 0.5f, 0.5f, 1.0f };
 
         m_context->RSSetViewports(1, &m_viewport);
         m_context->OMSetRenderTargets(1, m_RTV.GetAddressOf(), nullptr);
