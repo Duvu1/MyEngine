@@ -170,9 +170,9 @@ public:
         {
             const std::vector<Vertex> vertices =
             {
-                { { -1.0f, -1.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f }, { 0.0f,  1.0f } },
-                { {  1.0f, -1.0f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f }, { 1.0f,  1.0f } },
-                { {  0.0f,  1.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f }, { 0.5f, -1.0f } },
+                { { -0.5f, -0.5f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f }, { 0.0f,  1.0f } },
+                { {  0.5f, -0.5f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f }, { 1.0f,  1.0f } },
+                { {  0.0f,  0.5f, 0.0f, 1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f }, { 0.5f, -1.0f } },
             };
 
             D3D11_BUFFER_DESC bufferDesc;
@@ -248,6 +248,11 @@ public:
         //m_context->PSSetShaderResources(0, 1, )
         m_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
         m_context->DrawIndexed(indexCount, 0, 0);
+    }
+
+    void Clean()
+    {
+
     }
 
 public:

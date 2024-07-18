@@ -1,6 +1,10 @@
 ﻿// MyEngine.cpp : 애플리케이션에 대한 진입점을 정의합니다.
 //
 
+#include <imgui.h>
+#include <imgui_impl_dx11.h>
+#include <imgui_impl_win32.h>
+
 #include "framework.h"
 #include "MyEngine.h"
 #include "Appbase.h"
@@ -76,7 +80,20 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     auto example = std::make_unique<Appbase>(hWnd, width, height);
 
-    HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_MYENGINE));
+    //////////////////////
+    // ImGui Initialize //
+    //////////////////////
+    // Setup Dear Imgui context
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+    //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+    //io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // IF using Docking Branch
+
+    // Setup Platform/Renderer backends
+    ImGui_ImplWin32_Init(hWnd);
+    ImGui_ImplDX11_Init(example->m_device.Get(), example->m_context.Get());
 
     // 기본 메시지 루프입니다:
     MSG msg = {};
@@ -89,15 +106,37 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         }
         else
         {
+            // Start the Dear ImGui frame
+            ImGui_ImplDX11_NewFrame();
+            ImGui_ImplWin32_NewFrame();
+            ImGui::NewFrame();
+            ImGui::ShowDemoWindow();
+
+            //ImGui::Text("Hello, world %d", 123);
+
+            // My rendering
             example->Update();
             example->Render();
+
+            // ImGui rendering
+            ImGui::Render();
+            ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
             example->m_swapChain->Present(1, 0);
         }
     }
 
+    // ImGui shutdown
+    ImGui_ImplDX11_Shutdown();
+    ImGui_ImplWin32_Shutdown();
+    ImGui::DestroyContext();
+
+    example->Clean();
+
     return (int) msg.wParam;
 }
+
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 //
 //  함수: WndProc(HWND, UINT, WPARAM, LPARAM)
@@ -111,6 +150,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 //
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+    if (ImGui_ImplWin32_WndProcHandler(hWnd, message, wParam, lParam))
+        return true;
+
     switch (message)
     {
     case WM_CREATE:
