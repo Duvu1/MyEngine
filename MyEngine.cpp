@@ -71,9 +71,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         return FALSE;
     }
 
-    AllocConsole();
-    SetConsoleTitle(TEXT("MyEngine"));
-
     ShowWindow(hWnd, nCmdShow);
     UpdateWindow(hWnd);
 
@@ -82,8 +79,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_MYENGINE));
 
     // 기본 메시지 루프입니다:
-    MSG msg;
-    while (GetMessage(&msg, nullptr, 0, 0))
+    MSG msg = {};
+    while (WM_QUIT != msg.message)
     {
         if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
         {
@@ -92,7 +89,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         }
         else
         {
-            //example->Update();
+            example->Update();
             example->Render();
 
             example->m_swapChain->Present(1, 0);
@@ -116,6 +113,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
     {
+    case WM_CREATE:
+        AllocConsole();
+        SetConsoleTitle(TEXT("MyEngine"));
+        _tfreopen(_T("CONOUT$"), _T("w"), stdout);
+        _tfreopen(_T("CONERR$"), _T("w"), stderr);
+        _tsetlocale(LC_ALL, _T(""));
+        break;
     case WM_SYSCOMMAND:
         if ((wParam & 0xfff0) == SC_KEYMENU) // Disable ALT application menu 
             return 0;
