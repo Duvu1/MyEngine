@@ -110,9 +110,12 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
             ImGui_ImplDX11_NewFrame();
             ImGui_ImplWin32_NewFrame();
             ImGui::NewFrame();
-            ImGui::ShowDemoWindow();
-
-            //ImGui::Text("Hello, world %d", 123);
+            ImGui::Begin("Toolbar");
+            ImGui::Text("Background Color");
+            ImGui::SliderFloat3("", example->initColor, 0.0f, 1.0f);
+            ImGui::Text("Texture");
+            //ImGui::Checkbox("", &(example->m_texture));
+            ImGui::End();
 
             // My rendering
             example->Update();

@@ -130,12 +130,14 @@
   <ItemGroup>
     <ClInclude Include="Appbase.h" />
     <ClInclude Include="framework.h" />
+    <ClInclude Include="Image.h" />
     <ClInclude Include="MyEngine.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Appbase.cpp" />
+    <ClCompile Include="Image.cpp" />
     <ClCompile Include="MyEngine.cpp" />
   </ItemGroup>
   <ItemGroup>

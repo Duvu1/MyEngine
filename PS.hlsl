@@ -11,7 +11,7 @@ struct PSInput
 float4 main(PSInput input) : SV_Target
 {
     float4 color = input.color;
+    color = baseColorTexture.Sample(baseColorSampler, input.uv);
     
-    //return baseColorTexture.Sample(baseColorSampler, input.uv);
     return color;
 }

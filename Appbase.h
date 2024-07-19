@@ -1,37 +1,88 @@
 #pragma once
 
+#include <d3dcompiler.h> // for compile shaders
+
+//#include "Image.h"
 #include "framework.h"
-#include "d3dcompiler.h" // for compile shaders
+
+struct Vec4
+{
+    float v[4];
+};
+
+struct Vec2
+{
+    float v[2];
+};
+
+struct Vertex
+{
+    Vec4 pos;
+    Vec4 color;
+    Vec2 uv;
+};
+
+class Image
+{
+public:
+    int width = 0;
+    int height = 0;
+    int channels = 0;
+    std::vector<Vec4> pixels;
+
+    void ReadFromFile(const char* filename);
+};
 
 class Appbase
 {
 public:
-    struct Vec4
-    {
-        float v[4];
-    };
-
-    struct Vec2
-    {
-        float v[2];
-    };
-
-    struct Vertex
-    {
-        Vec4 pos;
-        Vec4 color;
-        Vec2 uv;
-    };
-
-public:
 	Appbase(HWND hWnd, int width, int height)
 	{
+        m_image.ReadFromFile("image.jpg");
+
 		Initialize(hWnd, width, height);
 	}
 
     ~Appbase()
     {
 
+    }
+
+    void InitShaders()
+    {
+        ID3DBlob* vertexBlob = nullptr;
+        ID3DBlob* pixelBlob = nullptr;
+        ID3DBlob* errorBlob = nullptr;
+
+        if (FAILED(D3DCompileFromFile(L"VS.hlsl", 0, 0, "main", "vs_5_0", 0, 0, &vertexBlob, &errorBlob)))
+        {
+            if (errorBlob) {
+                std::cout << "Vertex shader compile error\n" << (char*)errorBlob->GetBufferPointer() << std::endl;
+            }
+        }
+
+        if (FAILED(D3DCompileFromFile(L"PS.hlsl", 0, 0, "main", "ps_5_0", 0, 0, &pixelBlob, &errorBlob)))
+        {
+            if (errorBlob) {
+                std::cout << "Pixel shader compile error\n" << (char*)errorBlob->GetBufferPointer() << std::endl;
+            }
+        }
+
+        m_device->CreateVertexShader(vertexBlob->GetBufferPointer(), vertexBlob->GetBufferSize(), NULL, m_vertexShader.GetAddressOf());
+        m_device->CreatePixelShader(pixelBlob->GetBufferPointer(), pixelBlob->GetBufferSize(), NULL, m_pixelShader.GetAddressOf());
+
+        /////////////////////////////////
+        // create input layout objects //
+        /////////////////////////////////
+        D3D11_INPUT_ELEMENT_DESC inputLayout[] =
+        {
+            {"POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+            {"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 16, D3D11_INPUT_PER_VERTEX_DATA, 0},
+            {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 32, D3D11_INPUT_PER_VERTEX_DATA, 0},
+        };
+
+        m_device->CreateInputLayout(inputLayout, 3, vertexBlob->GetBufferPointer(), vertexBlob->GetBufferSize(), m_inputLayout.GetAddressOf());
+        m_context->IASetInputLayout(m_inputLayout.Get());
     }
 
 	void Initialize(HWND hWnd, int width, int height)
@@ -83,11 +134,7 @@ public:
         //////////////////////////
         // create render target //
         //////////////////////////
-        m_swapChain->GetBuffer(
-            0,
-            __uuidof(ID3D11Texture2D),
-            (LPVOID*)m_backBuffer.GetAddressOf()
-        );
+        m_swapChain->GetBuffer(0, IID_PPV_ARGS(m_backBuffer.GetAddressOf()));
 
         if (FAILED(m_device->CreateRenderTargetView(
             m_backBuffer.Get(),
@@ -115,39 +162,7 @@ public:
         ////////////////////////
         // initialize shaders //
         ////////////////////////
-        ID3DBlob* vertexBlob = nullptr;
-        ID3DBlob* pixelBlob = nullptr;
-        ID3DBlob* errorBlob = nullptr;
-
-        if (FAILED(D3DCompileFromFile(L"VS.hlsl", 0, 0, "main", "vs_5_0", 0, 0, &vertexBlob, &errorBlob)))
-        {
-            if (errorBlob) {
-                std::cout << "Vertex shader compile error\n" << (char*)errorBlob->GetBufferPointer() << std::endl;
-            }
-        }
-
-        if (FAILED(D3DCompileFromFile(L"PS.hlsl", 0, 0, "main", "ps_5_0", 0, 0, &pixelBlob, &errorBlob)))
-        {
-            if (errorBlob) {
-                std::cout << "Pixel shader compile error\n" << (char*)errorBlob->GetBufferPointer() << std::endl;
-            }
-        }
-
-        m_device->CreateVertexShader(vertexBlob->GetBufferPointer(), vertexBlob->GetBufferSize(), NULL, m_vertexShader.GetAddressOf());
-        m_device->CreatePixelShader(pixelBlob->GetBufferPointer(), pixelBlob->GetBufferSize(), NULL, m_pixelShader.GetAddressOf());
-
-        /////////////////////////////////
-        // create input layout objects //
-        /////////////////////////////////
-        D3D11_INPUT_ELEMENT_DESC inputLayout[] = 
-        {
-            {"POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
-            {"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 16, D3D11_INPUT_PER_VERTEX_DATA, 0},
-            {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 32, D3D11_INPUT_PER_VERTEX_DATA, 0},
-        };
-
-        m_device->CreateInputLayout(inputLayout, 3, vertexBlob->GetBufferPointer(), vertexBlob->GetBufferSize(), m_inputLayout.GetAddressOf());
-        m_context->IASetInputLayout(m_inputLayout.Get());
+        InitShaders();
 
         //////////////////////////
         // create sampler state //
@@ -164,15 +179,45 @@ public:
 
         m_device->CreateSamplerState(&samplerDesc, m_samplerState.GetAddressOf());
 
+        ////////////////////
+        // create texture //
+        ////////////////////
+        D3D11_TEXTURE2D_DESC textureDesc;
+        ZeroMemory(&textureDesc, sizeof(textureDesc));
+        textureDesc.Width = width;
+        textureDesc.Height = height;
+        textureDesc.MipLevels = 1;
+        textureDesc.ArraySize = 1;
+        textureDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+        textureDesc.SampleDesc.Count = 1;
+        textureDesc.SampleDesc.Quality = 0;
+        textureDesc.Usage = D3D11_USAGE_DYNAMIC;
+        textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+        textureDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+        textureDesc.MiscFlags = 0;
+
+        if (FAILED(m_device->CreateTexture2D(&textureDesc, NULL, m_texture.GetAddressOf())))
+        {
+            std::cout << "Failed: CreateTexture2D()" << std::endl;
+        }
+        
+        m_device->CreateShaderResourceView(m_texture.Get(), nullptr, m_SRV.GetAddressOf());
+
+        D3D11_MAPPED_SUBRESOURCE ms;
+        HRESULT hrr = m_context->Map(m_texture.Get(), NULL, D3D11_MAP_WRITE_DISCARD, NULL, &ms);
+        memcpy(ms.pData, m_image.pixels.data(), m_image.pixels.size() * sizeof(Vec4));
+        m_context->Unmap(m_texture.Get(), NULL);
+
         //////////////////////////
         // create vertex buffer //
         //////////////////////////
         {
             const std::vector<Vertex> vertices =
             {
-                { { -0.5f, -0.5f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f }, { 0.0f,  1.0f } },
-                { {  0.5f, -0.5f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f }, { 1.0f,  1.0f } },
-                { {  0.0f,  0.5f, 0.0f, 1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f }, { 0.5f, -1.0f } },
+                { { -0.5f, -0.5f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f } },
+                { { -0.5f,  0.5f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f }, { 0.0f, 0.0f } },
+                { {  0.5f,  0.5f, 0.0f, 1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f }, { 1.0f, 0.0f } },
+                { {  0.5f, -0.5f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f }, { 1.0f, 1.0f } },
             };
 
             D3D11_BUFFER_DESC bufferDesc;
@@ -200,7 +245,8 @@ public:
         {
             const std::vector<uint16_t> indices =
             {
-                2, 1, 0,
+                0, 1, 2,
+                0, 2, 3,
             };
 
             indexCount = indices.size();
@@ -225,13 +271,14 @@ public:
 
     void Update()
     {
-
+        //D3D11_MAPPED_SUBRESOURCE ms;
+        //m_context->Map(m_texture.Get(), NULL, D3D11_MAP_WRITE_DISCARD, NULL, &ms);
+        //memcpy(ms.pData, m_image.pixels.data(), m_image.pixels.size() * sizeof(Vec4));
+        //m_context->Unmap(m_texture.Get(), NULL);
     }
 
     void Render()
     {
-        float initColor[4] = { 0.5f, 0.5f, 0.5f, 1.0f };
-
         m_context->RSSetViewports(1, &m_viewport);
         m_context->OMSetRenderTargets(1, m_RTV.GetAddressOf(), nullptr);
         m_context->ClearRenderTargetView(m_RTV.Get(), initColor);
@@ -245,7 +292,7 @@ public:
         m_context->IASetIndexBuffer(m_indexBuffer.Get(), DXGI_FORMAT_R16_UINT, 0);
 
         m_context->PSSetSamplers(0, 1, m_samplerState.GetAddressOf());
-        //m_context->PSSetShaderResources(0, 1, )
+        m_context->PSSetShaderResources(0, 1, m_SRV.GetAddressOf());
         m_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
         m_context->DrawIndexed(indexCount, 0, 0);
     }
@@ -261,6 +308,7 @@ public:
     ComPtr<IDXGISwapChain> m_swapChain;
     ComPtr<ID3D11Texture2D> m_backBuffer;
     ComPtr<ID3D11RenderTargetView> m_RTV;
+    ComPtr<ID3D11ShaderResourceView> m_SRV;
     ComPtr<ID3D11SamplerState> m_samplerState;
     D3D11_VIEWPORT m_viewport;
 
@@ -270,7 +318,12 @@ public:
 
     ComPtr<ID3D11Buffer> m_vertexBuffer;
     ComPtr<ID3D11Buffer> m_indexBuffer;
+    ComPtr<ID3D11Texture2D> m_texture;
 
     int indexCount;
+    float initColor[4] = { 0.5f, 0.5f, 0.5f, 1.0f };
+
+    Image m_image;
+    bool m_drawTexture = true;
 };
 
