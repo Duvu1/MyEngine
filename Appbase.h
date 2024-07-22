@@ -29,10 +29,10 @@ class Appbase
 public:
 	Appbase(HWND hWnd, int width, int height)
 	{
-		Initialize(hWnd, width, height);
+        m_image.ReadFromFile("image.jpg");
+        m_circle = std::make_unique<Circle>(Circle({ 0.0f, 0.0f }, 100.0f, { 0.0f, 0.5f, 1.0f, 1.0f }));
 
-        //m_image.ReadFromFile("image.jpg");
-        m_circle = std::make_unique<Circle>(Circle({ 0.0f, 0.0f }, 10.0f, { 0.0f, 0.5f, 1.0f, 1.0f }));
+		Initialize(hWnd, width, height);
 	}
 
     ~Appbase()
@@ -62,6 +62,15 @@ public:
 
         m_device->CreateVertexShader(vertexBlob->GetBufferPointer(), vertexBlob->GetBufferSize(), NULL, m_vertexShader.GetAddressOf());
         m_device->CreatePixelShader(pixelBlob->GetBufferPointer(), pixelBlob->GetBufferSize(), NULL, m_pixelShader.GetAddressOf());
+
+        if (FAILED(D3DCompileFromFile(L"ImagePS.hlsl", 0, 0, "main", "ps_5_0", 0, 0, &pixelBlob, &errorBlob)))
+        {
+            if (errorBlob) {
+                std::cout << "Pixel shader compile error\n" << (char*)errorBlob->GetBufferPointer() << std::endl;
+            }
+        }
+
+        m_device->CreatePixelShader(pixelBlob->GetBufferPointer(), pixelBlob->GetBufferSize(), NULL, m_imagePixelShader.GetAddressOf());
 
         /////////////////////////////////
         // create input layout objects //
@@ -191,30 +200,59 @@ public:
         textureDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
         textureDesc.MiscFlags = 0;
 
-        if (FAILED(m_device->CreateTexture2D(&textureDesc, NULL, m_texture.GetAddressOf())))
+        if (FAILED(m_device->CreateTexture2D(&textureDesc, NULL, m_canvasTexture.GetAddressOf())))
         {
             std::cout << "Failed: CreateTexture2D()" << std::endl;
         }
         else
         {
-            m_device->CreateShaderResourceView(m_texture.Get(), nullptr, m_canvasSRV.GetAddressOf());
+            m_device->CreateShaderResourceView(m_canvasTexture.Get(), nullptr, m_canvasSRV.GetAddressOf());
             
-
-            D3D11_RENDER_TARGET_VIEW_DESC RTVDesc;
-            RTVDesc.Format = textureDesc.Format;
-            RTVDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
-            RTVDesc.Texture2D.MipSlice = 0;
-
-            m_device->CreateRenderTargetView(m_texture.Get(), &RTVDesc, m_canvasRTV.GetAddressOf());
-
+            //D3D11_RENDER_TARGET_VIEW_DESC RTVDesc;
+            //RTVDesc.Format = textureDesc.Format;
+            //RTVDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+            //RTVDesc.Texture2D.MipSlice = 0;
+            //
+            //m_device->CreateRenderTargetView(m_canvasTexture.Get(), &RTVDesc, m_canvasRTV.GetAddressOf());
         }
         
+        //////////////////////////
+        // create image texture //
+        //////////////////////////
+        D3D11_TEXTURE2D_DESC imageTextureDesc;
+        ZeroMemory(&textureDesc, sizeof(textureDesc));
+        imageTextureDesc.Width = width;
+        imageTextureDesc.Height = height;
+        imageTextureDesc.MipLevels = 1;
+        imageTextureDesc.ArraySize = 1;
+        imageTextureDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+        imageTextureDesc.SampleDesc.Count = 1;
+        imageTextureDesc.SampleDesc.Quality = 0;
+        imageTextureDesc.Usage = D3D11_USAGE_DYNAMIC;
+        imageTextureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+        imageTextureDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+        imageTextureDesc.MiscFlags = 0;
 
+        if (FAILED(m_device->CreateTexture2D(&imageTextureDesc, NULL, m_imageTexture.GetAddressOf())))
+        {
+            std::cout << "Failed: CreateTexture2D()" << std::endl;
+        }
+        else
+        {
+            m_device->CreateShaderResourceView(m_imageTexture.Get(), nullptr, m_imageSRV.GetAddressOf());
 
-        //D3D11_MAPPED_SUBRESOURCE ms;
-        //HRESULT hrr = m_context->Map(m_texture.Get(), NULL, D3D11_MAP_WRITE_DISCARD, NULL, &ms);
-        //memcpy(ms.pData, m_image.pixels.data(), m_image.pixels.size() * sizeof(glm::vec4));
-        //m_context->Unmap(m_texture.Get(), NULL);
+            //D3D11_RENDER_TARGET_VIEW_DESC RTVDesc;
+            //RTVDesc.Format = textureDesc.Format;
+            //RTVDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+            //RTVDesc.Texture2D.MipSlice = 0;
+            //
+            //m_device->CreateRenderTargetView(m_imageTexture.Get(), &RTVDesc, m_imageRTV.GetAddressOf());
+        }
+
+        D3D11_MAPPED_SUBRESOURCE ms;
+        hr = m_context->Map(m_imageTexture.Get(), NULL, D3D11_MAP_WRITE_DISCARD, NULL, &ms);
+        memcpy(ms.pData, m_image.pixels.data(), m_image.pixels.size() * sizeof(glm::vec4));
+        m_context->Unmap(m_imageTexture.Get(), NULL);
 
         //////////////////////////
         // create vertex buffer //
@@ -222,10 +260,10 @@ public:
         {
             const std::vector<Vertex> vertices =
             {
-                { { -0.5f, -0.5f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f } },
-                { { -0.5f,  0.5f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f }, { 0.0f, 0.0f } },
-                { {  0.5f,  0.5f, 0.0f, 1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f }, { 1.0f, 0.0f } },
-                { {  0.5f, -0.5f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f }, { 1.0f, 1.0f } },
+                { { -1.0f, -1.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f } },
+                { { -1.0f,  1.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f } },
+                { {  0.0f,  1.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f, 0.0f }, { 0.5f, 0.0f } },
+                { {  0.0f, -1.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f, 0.0f }, { 0.5f, 1.0f } },
             };
         
             D3D11_BUFFER_DESC bufferDesc;
@@ -242,6 +280,34 @@ public:
             vertexBufferData.SysMemSlicePitch = 0;
         
             const HRESULT hr = m_device->CreateBuffer(&bufferDesc, &vertexBufferData, m_vertexBuffer.GetAddressOf());
+            if (FAILED(hr)) {
+                std::cout << "Failed: CreateBuffer()" << std::endl;
+            };
+        }
+
+        {
+            const std::vector<Vertex> vertices =
+            {
+                { { -0.5f, -0.5f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f } },
+                { { -0.5f,  0.5f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f }, { 0.0f, 0.0f } },
+                { {  0.5f,  0.5f, 0.0f, 1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f }, { 1.0f, 0.0f } },
+                { {  0.5f, -0.5f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f }, { 1.0f, 1.0f } },
+            };
+
+            D3D11_BUFFER_DESC bufferDesc;
+            bufferDesc.Usage = D3D11_USAGE_DYNAMIC;                // write access access by CPU and GPU
+            bufferDesc.ByteWidth = UINT(sizeof(Vertex) * vertices.size());             // size is the VERTEX struct * 3
+            bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;       // use as a vertex buffer
+            bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;    // allow CPU to write in buffer
+            bufferDesc.MiscFlags = 0;
+            bufferDesc.StructureByteStride = sizeof(Vertex);
+
+            D3D11_SUBRESOURCE_DATA vertexBufferData = { 0, };
+            vertexBufferData.pSysMem = vertices.data();
+            vertexBufferData.SysMemPitch = 0;
+            vertexBufferData.SysMemSlicePitch = 0;
+
+            const HRESULT hr = m_device->CreateBuffer(&bufferDesc, &vertexBufferData, m_vertexBuffer1.GetAddressOf());
             if (FAILED(hr)) {
                 std::cout << "Failed: CreateBuffer()" << std::endl;
             };
@@ -294,7 +360,7 @@ public:
             constantBufferData.SysMemPitch = 0;
             constantBufferData.SysMemSlicePitch = 0;
         
-            m_device->CreateBuffer(&bufferDesc, &constantBufferData, m_constantBuffer.GetAddressOf());
+            hr = m_device->CreateBuffer(&bufferDesc, &constantBufferData, m_constantBuffer.GetAddressOf());
         }
     }
 
@@ -309,11 +375,19 @@ public:
                     pixels[i + j * width] = m_circle->color;
             }
 
+        // update canvas
         D3D11_MAPPED_SUBRESOURCE ms;
-        m_context->Map(m_texture.Get(), NULL, D3D11_MAP_WRITE_DISCARD, NULL, &ms);
+        m_context->Map(m_canvasTexture.Get(), NULL, D3D11_MAP_WRITE_DISCARD, NULL, &ms);
         //memcpy(ms.pData, m_image.pixels.data(), m_image.pixels.size() * sizeof(glm::vec4));
         memcpy(ms.pData, pixels.data(), pixels.size() * sizeof(glm::vec4));
-        m_context->Unmap(m_texture.Get(), NULL);
+        m_context->Unmap(m_canvasTexture.Get(), NULL);
+
+        // update constant buffer
+        //m_context->UpdateSubresource(m_constantBuffer.Get(), 0, nullptr, &m_constantBufferData, 0, 0);
+        //D3D11_MAPPED_SUBRESOURCE ms;
+        m_context->Map(m_constantBuffer.Get(), NULL, D3D11_MAP_WRITE_DISCARD, NULL, &ms);
+        memcpy(ms.pData, &m_constantBufferData, sizeof(ConstantBufferData));
+        m_context->Unmap(m_constantBuffer.Get(), NULL);
     }
 
     void Render()
@@ -332,8 +406,13 @@ public:
 
         m_context->PSSetSamplers(0, 1, m_samplerState.GetAddressOf());
         m_context->PSSetShaderResources(0, 1, m_canvasSRV.GetAddressOf());
-        m_context->PSSetConstantBuffers(0, 1, m_constantBuffer.GetAddressOf());
         m_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        m_context->DrawIndexed(indexCount, 0, 0);
+
+        m_context->PSSetShader(m_imagePixelShader.Get(), 0, 0);
+        m_context->IASetVertexBuffers(0, 1, m_vertexBuffer1.GetAddressOf(), &stride, &offset);
+        m_context->PSSetConstantBuffers(0, 1, m_constantBuffer.GetAddressOf());
+        m_context->PSSetShaderResources(0, 1, m_imageSRV.GetAddressOf());
         m_context->DrawIndexed(indexCount, 0, 0);
     }
 
@@ -347,7 +426,10 @@ public:
     ComPtr<ID3D11DeviceContext> m_context;
     ComPtr<IDXGISwapChain> m_swapChain;
     ComPtr<ID3D11Texture2D> m_backBuffer;
+
     ComPtr<ID3D11RenderTargetView> m_RTV;
+    ComPtr<ID3D11ShaderResourceView> m_imageSRV;
+    ComPtr<ID3D11RenderTargetView> m_imageRTV;
     ComPtr<ID3D11ShaderResourceView> m_canvasSRV;
     ComPtr<ID3D11RenderTargetView> m_canvasRTV;
     ComPtr<ID3D11SamplerState> m_samplerState;
@@ -355,27 +437,33 @@ public:
 
     ComPtr<ID3D11VertexShader> m_vertexShader;
     ComPtr<ID3D11PixelShader> m_pixelShader;
+    ComPtr<ID3D11PixelShader> m_imagePixelShader;
     ComPtr<ID3D11InputLayout> m_inputLayout;
 
     ComPtr<ID3D11Buffer> m_vertexBuffer;
+    ComPtr<ID3D11Buffer> m_vertexBuffer1;
     ComPtr<ID3D11Buffer> m_indexBuffer;
+    int indexCount;
     ComPtr<ID3D11Buffer> m_constantBuffer;
-    ComPtr<ID3D11Texture2D> m_texture;
+
+    ComPtr<ID3D11Texture2D> m_canvasTexture;
+    ComPtr<ID3D11Texture2D> m_imageTexture;
 
     struct ConstantBufferData
     {
-        glm::vec2 pos;
-        float radius = 1.0f;
+        bool textureOnOff = false;
+        bool dummy0;
+        char dummy1;
+        int  dummy2;
+        double dummy3;
     };
 
     ConstantBufferData m_constantBufferData;
 
-    int indexCount;
     float initColor[4] = { 0.5f, 0.5f, 0.5f, 1.0f };
 
     Image m_image;
     std::unique_ptr<Circle> m_circle;
-    bool m_drawTexture = true;
 
     int width, height;
 };

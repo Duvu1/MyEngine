@@ -67,5 +67,6 @@
   <ItemGroup>
     <FxCompile Include="VS.hlsl" />
     <FxCompile Include="PS.hlsl" />
+    <FxCompile Include="ImagePS.hlsl" />
   </ItemGroup>
 </Project>

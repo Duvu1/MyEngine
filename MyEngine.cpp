@@ -113,6 +113,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
             ImGui::Begin("Toolbar");
             ImGui::Text("Rectangle");
             ImGui::SliderFloat3("BG Color", example->initColor, 0.0f, 1.0f);
+            ImGui::Checkbox("Image Texture", &example->m_constantBufferData.textureOnOff);
             ImGui::Text("Circle");
             ImGui::SliderFloat2("Position", &example->m_circle->center.x, 0.0f, width);
             ImGui::SliderFloat("Radius", &example->m_circle->radius, 0.0f, 1000.0f);
