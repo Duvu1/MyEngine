@@ -129,6 +129,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Appbase.h" />
+    <ClInclude Include="Circle.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="Image.h" />
     <ClInclude Include="MyEngine.h" />
@@ -137,6 +138,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Appbase.cpp" />
+    <ClCompile Include="Circle.cpp" />
     <ClCompile Include="Image.cpp" />
     <ClCompile Include="MyEngine.cpp" />
   </ItemGroup>

@@ -22,10 +22,10 @@ void Image::ReadFromFile(const char* filename)
 
     for (int i = 0; i < width * height; i++)
     {
-        pixels[i].v[0] = img[i * channels] / 255.0f;
-        pixels[i].v[1] = img[i * channels + 1] / 255.0f;
-        pixels[i].v[2] = img[i * channels + 2] / 255.0f;
-        pixels[i].v[3] = 1.0f;
+        pixels[i][0] = img[i * channels] / 255.0f;
+        pixels[i][1] = img[i * channels + 1] / 255.0f;
+        pixels[i][2] = img[i * channels + 2] / 255.0f;
+        pixels[i][3] = 1.0f;
     }
 
     delete[] img;

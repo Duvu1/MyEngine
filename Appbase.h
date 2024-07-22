@@ -4,22 +4,13 @@
 
 //#include "Image.h"
 #include "framework.h"
-
-struct Vec4
-{
-    float v[4];
-};
-
-struct Vec2
-{
-    float v[2];
-};
+#include "Circle.h"
 
 struct Vertex
 {
-    Vec4 pos;
-    Vec4 color;
-    Vec2 uv;
+    glm::vec4 pos;
+    glm::vec4 color;
+    glm::vec2 uv;
 };
 
 class Image
@@ -28,7 +19,7 @@ public:
     int width = 0;
     int height = 0;
     int channels = 0;
-    std::vector<Vec4> pixels;
+    std::vector<glm::vec4> pixels;
 
     void ReadFromFile(const char* filename);
 };
@@ -38,14 +29,15 @@ class Appbase
 public:
 	Appbase(HWND hWnd, int width, int height)
 	{
-        m_image.ReadFromFile("image.jpg");
-
 		Initialize(hWnd, width, height);
+
+        //m_image.ReadFromFile("image.jpg");
+        m_circle = std::make_unique<Circle>(Circle({ 0.0f, 0.0f }, 10.0f, { 0.0f, 0.5f, 1.0f, 1.0f }));
 	}
 
     ~Appbase()
     {
-
+        
     }
 
     void InitShaders()
@@ -87,6 +79,9 @@ public:
 
 	void Initialize(HWND hWnd, int width, int height)
 	{
+        this->width = width;
+        this->height = height;
+
         //////////////////////
         // create swapchain //
         //////////////////////
@@ -200,13 +195,26 @@ public:
         {
             std::cout << "Failed: CreateTexture2D()" << std::endl;
         }
-        
-        m_device->CreateShaderResourceView(m_texture.Get(), nullptr, m_SRV.GetAddressOf());
+        else
+        {
+            m_device->CreateShaderResourceView(m_texture.Get(), nullptr, m_canvasSRV.GetAddressOf());
+            
 
-        D3D11_MAPPED_SUBRESOURCE ms;
-        HRESULT hrr = m_context->Map(m_texture.Get(), NULL, D3D11_MAP_WRITE_DISCARD, NULL, &ms);
-        memcpy(ms.pData, m_image.pixels.data(), m_image.pixels.size() * sizeof(Vec4));
-        m_context->Unmap(m_texture.Get(), NULL);
+            D3D11_RENDER_TARGET_VIEW_DESC RTVDesc;
+            RTVDesc.Format = textureDesc.Format;
+            RTVDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+            RTVDesc.Texture2D.MipSlice = 0;
+
+            m_device->CreateRenderTargetView(m_texture.Get(), &RTVDesc, m_canvasRTV.GetAddressOf());
+
+        }
+        
+
+
+        //D3D11_MAPPED_SUBRESOURCE ms;
+        //HRESULT hrr = m_context->Map(m_texture.Get(), NULL, D3D11_MAP_WRITE_DISCARD, NULL, &ms);
+        //memcpy(ms.pData, m_image.pixels.data(), m_image.pixels.size() * sizeof(glm::vec4));
+        //m_context->Unmap(m_texture.Get(), NULL);
 
         //////////////////////////
         // create vertex buffer //
@@ -219,7 +227,7 @@ public:
                 { {  0.5f,  0.5f, 0.0f, 1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f }, { 1.0f, 0.0f } },
                 { {  0.5f, -0.5f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f }, { 1.0f, 1.0f } },
             };
-
+        
             D3D11_BUFFER_DESC bufferDesc;
             bufferDesc.Usage = D3D11_USAGE_DYNAMIC;                // write access access by CPU and GPU
             bufferDesc.ByteWidth = UINT(sizeof(Vertex) * vertices.size());             // size is the VERTEX struct * 3
@@ -227,12 +235,12 @@ public:
             bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;    // allow CPU to write in buffer
             bufferDesc.MiscFlags = 0;
             bufferDesc.StructureByteStride = sizeof(Vertex);
-
+        
             D3D11_SUBRESOURCE_DATA vertexBufferData = { 0, };
             vertexBufferData.pSysMem = vertices.data();
             vertexBufferData.SysMemPitch = 0;
             vertexBufferData.SysMemSlicePitch = 0;
-
+        
             const HRESULT hr = m_device->CreateBuffer(&bufferDesc, &vertexBufferData, m_vertexBuffer.GetAddressOf());
             if (FAILED(hr)) {
                 std::cout << "Failed: CreateBuffer()" << std::endl;
@@ -248,33 +256,64 @@ public:
                 0, 1, 2,
                 0, 2, 3,
             };
-
+        
             indexCount = indices.size();
-
+        
             D3D11_BUFFER_DESC bufferDesc;
             ZeroMemory(&bufferDesc, sizeof(bufferDesc));
             bufferDesc.Usage = D3D11_USAGE_DYNAMIC;                // write access access by CPU and GPU
             bufferDesc.ByteWidth = UINT(sizeof(uint16_t) * indices.size());
-            bufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;       // use as a vertex buffer
+            bufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;        // use as a index buffer
             bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;    // allow CPU to write in buffer
             bufferDesc.MiscFlags = 0;
             bufferDesc.StructureByteStride = sizeof(uint16_t);
-
+        
             D3D11_SUBRESOURCE_DATA indexBufferData = { 0 };
             indexBufferData.pSysMem = indices.data();
             indexBufferData.SysMemPitch = 0;
             indexBufferData.SysMemSlicePitch = 0;
-
+        
             m_device->CreateBuffer(&bufferDesc, &indexBufferData, m_indexBuffer.GetAddressOf());
+        }
+
+        ////////////////////////////
+        // create constant buffer //
+        ////////////////////////////
+        {
+            D3D11_BUFFER_DESC bufferDesc;
+            ZeroMemory(&bufferDesc, sizeof(bufferDesc));
+            bufferDesc.Usage = D3D11_USAGE_DYNAMIC;                // write access access by CPU and GPU
+            bufferDesc.ByteWidth = sizeof(ConstantBufferData);
+            bufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;     // use as a constant buffer
+            bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;    // allow CPU to write in buffer
+            bufferDesc.MiscFlags = 0;
+            bufferDesc.StructureByteStride = 0;
+        
+            D3D11_SUBRESOURCE_DATA constantBufferData = { 0 };
+            constantBufferData.pSysMem = &m_constantBufferData;
+            constantBufferData.SysMemPitch = 0;
+            constantBufferData.SysMemSlicePitch = 0;
+        
+            m_device->CreateBuffer(&bufferDesc, &constantBufferData, m_constantBuffer.GetAddressOf());
         }
     }
 
     void Update()
     {
-        //D3D11_MAPPED_SUBRESOURCE ms;
-        //m_context->Map(m_texture.Get(), NULL, D3D11_MAP_WRITE_DISCARD, NULL, &ms);
-        //memcpy(ms.pData, m_image.pixels.data(), m_image.pixels.size() * sizeof(Vec4));
-        //m_context->Unmap(m_texture.Get(), NULL);
+        std::vector<glm::vec4> pixels(width * height, glm::vec4{ 1.0f, 1.0f, 1.0f, 1.0f });
+
+        for (int i = 0; i < width; i++)
+            for (int j = 0; j < height; j++)
+            {
+                if (m_circle->IsInside(glm::vec2{ i, j }))
+                    pixels[i + j * width] = m_circle->color;
+            }
+
+        D3D11_MAPPED_SUBRESOURCE ms;
+        m_context->Map(m_texture.Get(), NULL, D3D11_MAP_WRITE_DISCARD, NULL, &ms);
+        //memcpy(ms.pData, m_image.pixels.data(), m_image.pixels.size() * sizeof(glm::vec4));
+        memcpy(ms.pData, pixels.data(), pixels.size() * sizeof(glm::vec4));
+        m_context->Unmap(m_texture.Get(), NULL);
     }
 
     void Render()
@@ -292,7 +331,8 @@ public:
         m_context->IASetIndexBuffer(m_indexBuffer.Get(), DXGI_FORMAT_R16_UINT, 0);
 
         m_context->PSSetSamplers(0, 1, m_samplerState.GetAddressOf());
-        m_context->PSSetShaderResources(0, 1, m_SRV.GetAddressOf());
+        m_context->PSSetShaderResources(0, 1, m_canvasSRV.GetAddressOf());
+        m_context->PSSetConstantBuffers(0, 1, m_constantBuffer.GetAddressOf());
         m_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
         m_context->DrawIndexed(indexCount, 0, 0);
     }
@@ -308,7 +348,8 @@ public:
     ComPtr<IDXGISwapChain> m_swapChain;
     ComPtr<ID3D11Texture2D> m_backBuffer;
     ComPtr<ID3D11RenderTargetView> m_RTV;
-    ComPtr<ID3D11ShaderResourceView> m_SRV;
+    ComPtr<ID3D11ShaderResourceView> m_canvasSRV;
+    ComPtr<ID3D11RenderTargetView> m_canvasRTV;
     ComPtr<ID3D11SamplerState> m_samplerState;
     D3D11_VIEWPORT m_viewport;
 
@@ -318,12 +359,24 @@ public:
 
     ComPtr<ID3D11Buffer> m_vertexBuffer;
     ComPtr<ID3D11Buffer> m_indexBuffer;
+    ComPtr<ID3D11Buffer> m_constantBuffer;
     ComPtr<ID3D11Texture2D> m_texture;
+
+    struct ConstantBufferData
+    {
+        glm::vec2 pos;
+        float radius = 1.0f;
+    };
+
+    ConstantBufferData m_constantBufferData;
 
     int indexCount;
     float initColor[4] = { 0.5f, 0.5f, 0.5f, 1.0f };
 
     Image m_image;
+    std::unique_ptr<Circle> m_circle;
     bool m_drawTexture = true;
+
+    int width, height;
 };
 

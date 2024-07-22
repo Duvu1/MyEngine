@@ -1,6 +1,12 @@
 Texture2D baseColorTexture : register(t0);
 SamplerState baseColorSampler : register(s0);
 
+cbuffer PSConstantBuffer : register(b0)
+{
+    float2 position;
+    float radius;
+};
+
 struct PSInput
 {
     float4 position : SV_POSITION;
