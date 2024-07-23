@@ -119,9 +119,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
             //ImGui::SliderFloat("Radius", &example->m_circle->radius, 0.0f, 3.0f);
             //ImGui::SliderFloat3("Color", &example->m_circle->color.r, 0.0f, 1.0f);
             ImGui::Text("Sphere");
-            ImGui::SliderFloat2("Position", &example->m_raytracer->sphere->center.x, -width / height, width/ height);
+            ImGui::SliderFloat2("Sphere Position", &example->m_raytracer->sphere->center.x, -width / height, width/ height);
             ImGui::SliderFloat("Radius", &example->m_raytracer->sphere->radius, 0.0f, 3.0f);
-            ImGui::SliderFloat3("Color", &example->m_raytracer->sphere->color.r, 0.0f, 1.0f);
+            //ImGui::SliderFloat3("Color", &example->m_raytracer->sphere->color.r, 0.0f, 1.0f);
+            ImGui::SliderFloat3("Ambient", &example->m_raytracer->sphere->ambient.x, 0.0f, 1.0f);
+            ImGui::SliderFloat3("Diffuse", &example->m_raytracer->sphere->diffuse.x, 0.0f, 1.0f);
+            ImGui::SliderFloat3("Specular", &example->m_raytracer->sphere->specular.x, 0.0f, 1.0f);
+            ImGui::Text("Light");
+            ImGui::SliderFloat3("Light Position", &example->m_raytracer->light.pos.x, -1.0f, 1.0f);
             ImGui::End();
             ImGui::Render();
 

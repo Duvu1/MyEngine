@@ -134,6 +134,7 @@
     <ClInclude Include="framework.h" />
     <ClInclude Include="Hit.h" />
     <ClInclude Include="Image.h" />
+    <ClInclude Include="Light.h" />
     <ClInclude Include="MyEngine.h" />
     <ClInclude Include="Ray.h" />
     <ClInclude Include="Raytracer.h" />

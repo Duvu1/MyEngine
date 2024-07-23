@@ -118,8 +118,7 @@ public:
 
         HRESULT hr = S_OK;
         D3D_FEATURE_LEVEL FeatureLevel;
-
-        if (FAILED(D3D11CreateDeviceAndSwapChain(
+        hr = D3D11CreateDeviceAndSwapChain(
             NULL,
             D3D_DRIVER_TYPE_HARDWARE,
             NULL,
@@ -132,10 +131,12 @@ public:
             m_device.GetAddressOf(),
             &FeatureLevel,
             m_context.GetAddressOf()
-        )
-        ))
+        );
+
+        if (FAILED(hr))
         {
             std::cout << "Failed: CreateDeviceAndSwapChain()" << std::endl;
+            return;
         }
 
         //////////////////////////
@@ -143,14 +144,16 @@ public:
         //////////////////////////
         m_swapChain->GetBuffer(0, IID_PPV_ARGS(m_backBuffer.GetAddressOf()));
 
-        if (FAILED(m_device->CreateRenderTargetView(
+        hr = m_device->CreateRenderTargetView(
             m_backBuffer.Get(),
             NULL,
             m_RTV.GetAddressOf()
-        )
-        ))
+        );
+
+        if (FAILED(hr))
         {
             std::cout << "Failed: CreateRenderTargetView()" << std::endl;
+            return;
         }
 
         //////////////////
@@ -184,7 +187,13 @@ public:
         samplerDesc.MinLOD = 0;
         samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
 
-        m_device->CreateSamplerState(&samplerDesc, m_samplerState.GetAddressOf());
+        hr = m_device->CreateSamplerState(&samplerDesc, m_samplerState.GetAddressOf());
+
+        if (FAILED(hr))
+        {
+            std::cout << "Failed: CreateSamplerState()" << std::endl;
+            return;
+        }
 
         ////////////////////
         // create texture //
@@ -203,9 +212,12 @@ public:
         textureDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
         textureDesc.MiscFlags = 0;
 
-        if (FAILED(m_device->CreateTexture2D(&textureDesc, NULL, m_canvasTexture.GetAddressOf())))
+        hr = m_device->CreateTexture2D(&textureDesc, NULL, m_canvasTexture.GetAddressOf());
+
+        if (FAILED(hr))
         {
             std::cout << "Failed: CreateTexture2D()" << std::endl;
+            return;
         }
         else
         {
@@ -236,9 +248,12 @@ public:
         imageTextureDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
         imageTextureDesc.MiscFlags = 0;
 
-        if (FAILED(m_device->CreateTexture2D(&imageTextureDesc, NULL, m_imageTexture.GetAddressOf())))
+        hr = m_device->CreateTexture2D(&imageTextureDesc, NULL, m_imageTexture.GetAddressOf());
+
+        if (FAILED(hr))
         {
             std::cout << "Failed: CreateTexture2D()" << std::endl;
+            return;
         }
         else
         {
@@ -263,10 +278,10 @@ public:
         {
             const std::vector<Vertex> vertices =
             {
-                { { -1.0f, -1.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f } },
-                { { -1.0f,  1.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f } },
-                { {  0.0f,  1.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f, 0.0f }, { 0.5f, 0.0f } },
-                { {  0.0f, -1.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f, 0.0f }, { 0.5f, 1.0f } },
+                { { -1.0f, -1.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f } },
+                { { -1.0f,  1.0f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f }, { 0.0f, 0.0f } },
+                { {  1.0f,  1.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f }, { 1.0f, 0.0f } },
+                { {  1.0f, -1.0f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f }, { 1.0f, 1.0f } },
             };
         
             D3D11_BUFFER_DESC bufferDesc;
@@ -282,19 +297,21 @@ public:
             vertexBufferData.SysMemPitch = 0;
             vertexBufferData.SysMemSlicePitch = 0;
         
-            const HRESULT hr = m_device->CreateBuffer(&bufferDesc, &vertexBufferData, m_vertexBuffer.GetAddressOf());
+            const HRESULT hr = m_device->CreateBuffer(&bufferDesc, &vertexBufferData, m_vertexBuffer0.GetAddressOf());
+
             if (FAILED(hr)) {
-                std::cout << "Failed: CreateBuffer()" << std::endl;
-            };
+                std::cout << "Failed: CreateBuffer()_Vertex0" << std::endl;
+                return;
+            }
         }
 
         {
             const std::vector<Vertex> vertices =
             {
-                { { -0.5f, -0.5f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f } },
-                { { -0.5f,  0.5f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f }, { 0.0f, 0.0f } },
-                { {  0.5f,  0.5f, 0.0f, 1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f }, { 1.0f, 0.0f } },
-                { {  0.5f, -0.5f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f }, { 1.0f, 1.0f } },
+                { { -0.8f, -0.8f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f } },
+                { { -0.8f,  0.8f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f } },
+                { {  0.8f,  0.8f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f, 0.0f }, { 1.0f, 0.0f } },
+                { {  0.8f, -0.8f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f } },
             };
 
             D3D11_BUFFER_DESC bufferDesc;
@@ -311,8 +328,10 @@ public:
             vertexBufferData.SysMemSlicePitch = 0;
 
             const HRESULT hr = m_device->CreateBuffer(&bufferDesc, &vertexBufferData, m_vertexBuffer1.GetAddressOf());
+
             if (FAILED(hr)) {
-                std::cout << "Failed: CreateBuffer()" << std::endl;
+                std::cout << "Failed: CreateBuffer()_Vertex1" << std::endl;
+                return;
             };
         }
 
@@ -342,7 +361,12 @@ public:
             indexBufferData.SysMemPitch = 0;
             indexBufferData.SysMemSlicePitch = 0;
         
-            m_device->CreateBuffer(&bufferDesc, &indexBufferData, m_indexBuffer.GetAddressOf());
+            const HRESULT hr = m_device->CreateBuffer(&bufferDesc, &indexBufferData, m_indexBuffer.GetAddressOf());
+
+            if (FAILED(hr)) {
+                std::cout << "Failed: CreateBuffer()_Index" << std::endl;
+                return;
+            };
         }
 
         ////////////////////////////
@@ -364,6 +388,11 @@ public:
             constantBufferData.SysMemSlicePitch = 0;
         
             hr = m_device->CreateBuffer(&bufferDesc, &constantBufferData, m_constantBuffer.GetAddressOf());
+
+            if (FAILED(hr)) {
+                std::cout << "Failed: CreateBuffer()_Constant" << std::endl;
+                return;
+            };
         }
     }
 
@@ -395,22 +424,22 @@ public:
         m_context->ClearRenderTargetView(m_RTV.Get(), initColor);
 
         m_context->VSSetShader(m_vertexShader.Get(), 0, 0);
-        m_context->PSSetShader(m_pixelShader.Get(), 0, 0);
+        m_context->PSSetShader(m_imagePixelShader.Get(), 0, 0);
 
         UINT stride = sizeof(Vertex);
         UINT offset = 0;
-        m_context->IASetVertexBuffers(0, 1, m_vertexBuffer.GetAddressOf(), &stride, &offset);
+        m_context->IASetVertexBuffers(0, 1, m_vertexBuffer0.GetAddressOf(), &stride, &offset);
         m_context->IASetIndexBuffer(m_indexBuffer.Get(), DXGI_FORMAT_R16_UINT, 0);
 
         m_context->PSSetSamplers(0, 1, m_samplerState.GetAddressOf());
-        m_context->PSSetShaderResources(0, 1, m_canvasSRV.GetAddressOf());
+        m_context->PSSetShaderResources(0, 1, m_imageSRV.GetAddressOf());
+        m_context->PSSetConstantBuffers(0, 1, m_constantBuffer.GetAddressOf());
         m_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
         m_context->DrawIndexed(indexCount, 0, 0);
 
-        m_context->PSSetShader(m_imagePixelShader.Get(), 0, 0);
+        m_context->PSSetShader(m_pixelShader.Get(), 0, 0);
         m_context->IASetVertexBuffers(0, 1, m_vertexBuffer1.GetAddressOf(), &stride, &offset);
-        m_context->PSSetConstantBuffers(0, 1, m_constantBuffer.GetAddressOf());
-        m_context->PSSetShaderResources(0, 1, m_imageSRV.GetAddressOf());
+        m_context->PSSetShaderResources(0, 1, m_canvasSRV.GetAddressOf());
         m_context->DrawIndexed(indexCount, 0, 0);
     }
 
@@ -438,7 +467,7 @@ public:
     ComPtr<ID3D11PixelShader> m_imagePixelShader;
     ComPtr<ID3D11InputLayout> m_inputLayout;
 
-    ComPtr<ID3D11Buffer> m_vertexBuffer;
+    ComPtr<ID3D11Buffer> m_vertexBuffer0;
     ComPtr<ID3D11Buffer> m_vertexBuffer1;
     ComPtr<ID3D11Buffer> m_indexBuffer;
     UINT indexCount;

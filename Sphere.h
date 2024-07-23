@@ -8,9 +8,21 @@ class Sphere
 public:
 	glm::vec3 center;
 	float radius;
-	glm::vec3 color;
+
+	glm::vec3 color = glm::vec3(1.0f);
+	glm::vec3 ambient = glm::vec3(0.0f);
+	glm::vec3 diffuse = glm::vec3(0.0f);
+	glm::vec3 specular = glm::vec3(0.0f);
+
+	float alpha = 0.0f;
+	float ks = 0.0f;
 
 public:
+	Sphere(glm::vec3 center, float radius)
+		: center(center)
+		, radius(radius)
+	{}
+
 	Sphere(glm::vec3 center, float radius, glm::vec3 color)
 		: center(center)
 		, radius(radius)
@@ -31,7 +43,6 @@ public:
 			const float d2 = -b / 2.0f - sqrt(nabla);
 
 			hit.dist = glm::min(d1, d2); // 둘 중 작은 것
-
 			hit.hitPos = ray.start + ray.dir * hit.dist;
 			hit.normal = glm::normalize(hit.hitPos - this->center);
 		}

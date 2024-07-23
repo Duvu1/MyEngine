@@ -3,12 +3,14 @@
 #include <vector>
 
 #include "framework.h"
+#include "Light.h"
 #include "Sphere.h"
 
 class Raytracer
 {
 public:
 	int width, height;
+	Light light;
 	std::shared_ptr<Sphere> sphere;
 
 public:
@@ -16,7 +18,14 @@ public:
 		: width(width)
 		, height(height)
 	{
-		sphere = std::make_shared<Sphere>(glm::vec3(0.0f, 0.0f, 0.5f), 0.4f, glm::vec3{ 1.0f });
+		sphere = std::make_shared<Sphere>(glm::vec3(0.0f, 0.0f, 0.5f), 0.5f);
+		sphere->ambient = glm::vec3(0.0f);
+		sphere->diffuse = glm::vec3(0.0f, 1.0f, 1.0f);
+		sphere->specular = glm::vec3(1.0f);
+		sphere->alpha = 9.0f;
+		sphere->ks = 0.8;
+
+		light = Light{ { 0.0f, 0.0f, -1.0f } }; // point lihgt
 	}
 
 	glm::vec3 TransformScreenToWorld(glm::vec2 positionScreen)
@@ -32,9 +41,23 @@ public:
 		const Hit hit = sphere->IntersectRayCollision(ray);
 
 		if (hit.dist < 0)
+		{
 			return glm::vec3{ 0.0f };
+		}
 		else
-			return sphere->color * hit.dist;
+		{
+			//return sphere->color * hit.dist;
+
+			// Diffuse
+			const glm::vec3 directionToLight = glm::normalize(light.pos - hit.hitPos);
+			const float diffuse = glm::max(glm::dot(hit.normal, directionToLight), 0.0f);
+
+			// Specular
+			const glm::vec3 reflectDirection = 2.0f * glm::dot(hit.normal, directionToLight) * hit.normal - directionToLight;
+			const float specular = glm::pow(glm::max(glm::dot(-ray.dir, reflectDirection), 0.0f), sphere->alpha);
+
+			return sphere->ambient + sphere->diffuse * diffuse + sphere->specular * specular * sphere->ks;
+		}
 	}
 
 	void Render(std::vector<glm::vec4>& pixels)
