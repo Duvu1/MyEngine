@@ -17,6 +17,7 @@
 #include <iostream>
 #include <d3d11.h>
 #include <wrl.h> // ComPtr
+#include <glm/glm.hpp>
 
 #include <vector>
 

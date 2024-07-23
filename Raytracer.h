@@ -1,0 +1,55 @@
+#pragma once
+
+#include <vector>
+
+#include "framework.h"
+#include "Sphere.h"
+
+class Raytracer
+{
+public:
+	int width, height;
+	std::shared_ptr<Sphere> sphere;
+
+public:
+	Raytracer(const int& width, const int& height)
+		: width(width)
+		, height(height)
+	{
+		sphere = std::make_shared<Sphere>(glm::vec3(0.0f, 0.0f, 0.5f), 0.4f, glm::vec3{ 1.0f });
+	}
+
+	glm::vec3 TransformScreenToWorld(glm::vec2 positionScreen)
+	{
+		float x = (positionScreen.x - width / 2) / (height / 2);
+		float y = (positionScreen.y - height / 2) / (height / 2);
+
+		return glm::vec3(x, y, 0.0f);
+	}
+
+	glm::vec3 traceRay(Ray& ray)
+	{
+		const Hit hit = sphere->IntersectRayCollision(ray);
+
+		if (hit.dist < 0)
+			return glm::vec3{ 0.0f };
+		else
+			return sphere->color * hit.dist;
+	}
+
+	void Render(std::vector<glm::vec4>& pixels)
+	{
+		std::fill(pixels.begin(), pixels.end(), glm::vec4{ 0.0f, 0.0f, 0.0f, 1.0f });
+
+		for (int i = 0; i < width; i++)
+			for (int j = 0; j < height; j++)
+			{
+				glm::vec3 pixelPosWorld = TransformScreenToWorld(glm::vec2(i, j));
+				glm::vec3 rayDir = glm::vec3(0.0f, 0.0f, 1.0f);
+
+				Ray pixelRay{ pixelPosWorld, rayDir };
+
+				pixels[i + j * width] = glm::vec4(traceRay(pixelRay), 1.0f);
+			}
+	}
+};

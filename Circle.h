@@ -1,7 +1,6 @@
 #pragma once
 
 #include "framework.h"
-#include <glm/glm.hpp>
 
 class Circle
 {
@@ -18,7 +17,7 @@ public:
 
 	bool IsInside(const glm::vec2 &pos)
 	{
-		if (glm::length(center - pos) <= radius)
+		if (glm::dot(pos - center, pos - center) < radius)
 			return true;
 		else
 			return false;

@@ -114,11 +114,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
             ImGui::Text("Rectangle");
             ImGui::SliderFloat3("BG Color", example->initColor, 0.0f, 1.0f);
             ImGui::Checkbox("Image Texture", &example->m_constantBufferData.textureOnOff);
-            ImGui::Text("Circle");
-            ImGui::SliderFloat2("Position", &example->m_circle->center.x, 0.0f, width);
-            ImGui::SliderFloat("Radius", &example->m_circle->radius, 0.0f, 1000.0f);
-            ImGui::SliderFloat3("Color", &example->m_circle->color.r, 0.0f, 1.0f);
-            //ImGui::Checkbox("", &(example->m_texture));
+            //ImGui::Text("Circle");
+            //ImGui::SliderFloat2("Position", &example->m_circle->center.x, -width / height, width/ height);
+            //ImGui::SliderFloat("Radius", &example->m_circle->radius, 0.0f, 3.0f);
+            //ImGui::SliderFloat3("Color", &example->m_circle->color.r, 0.0f, 1.0f);
+            ImGui::Text("Sphere");
+            ImGui::SliderFloat2("Position", &example->m_raytracer->sphere->center.x, -width / height, width/ height);
+            ImGui::SliderFloat("Radius", &example->m_raytracer->sphere->radius, 0.0f, 3.0f);
+            ImGui::SliderFloat3("Color", &example->m_raytracer->sphere->color.r, 0.0f, 1.0f);
             ImGui::End();
             ImGui::Render();
 

@@ -5,6 +5,7 @@
 //#include "Image.h"
 #include "framework.h"
 #include "Circle.h"
+#include "Raytracer.h"
 
 struct Vertex
 {
@@ -30,7 +31,8 @@ public:
 	Appbase(HWND hWnd, int width, int height)
 	{
         m_image.ReadFromFile("image.jpg");
-        m_circle = std::make_unique<Circle>(Circle({ 0.0f, 0.0f }, 100.0f, { 0.0f, 0.5f, 1.0f, 1.0f }));
+        //m_circle = std::make_unique<Circle>(Circle({ 0.0f, 0.0f }, 0.5f, { 0.0f, 0.5f, 1.0f, 1.0f }));
+        m_raytracer = std::make_unique<Raytracer>(width, height);
 
 		Initialize(hWnd, width, height);
 	}
@@ -39,6 +41,7 @@ public:
     {
         
     }
+
 
     void InitShaders()
     {
@@ -368,12 +371,7 @@ public:
     {
         std::vector<glm::vec4> pixels(width * height, glm::vec4{ 1.0f, 1.0f, 1.0f, 1.0f });
 
-        for (int i = 0; i < width; i++)
-            for (int j = 0; j < height; j++)
-            {
-                if (m_circle->IsInside(glm::vec2{ i, j }))
-                    pixels[i + j * width] = m_circle->color;
-            }
+        m_raytracer->Render(pixels);
 
         // update canvas
         D3D11_MAPPED_SUBRESOURCE ms;
@@ -443,7 +441,7 @@ public:
     ComPtr<ID3D11Buffer> m_vertexBuffer;
     ComPtr<ID3D11Buffer> m_vertexBuffer1;
     ComPtr<ID3D11Buffer> m_indexBuffer;
-    int indexCount;
+    UINT indexCount;
     ComPtr<ID3D11Buffer> m_constantBuffer;
 
     ComPtr<ID3D11Texture2D> m_canvasTexture;
@@ -464,6 +462,7 @@ public:
 
     Image m_image;
     std::unique_ptr<Circle> m_circle;
+    std::unique_ptr<Raytracer> m_raytracer;
 
     int width, height;
 };
