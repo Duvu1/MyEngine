@@ -75,17 +75,25 @@ public:
 		}
 		else
 		{
-			//return sphere->color * hit.dist;
-
-			// Diffuse
 			const glm::vec3 directionToLight = glm::normalize(light.pos - hit.hitPos);
-			const float diffuse = glm::max(glm::dot(hit.normal, directionToLight), 0.0f);
 
-			// Specular
-			const glm::vec3 reflectDirection = 2.0f * glm::dot(hit.normal, directionToLight) * hit.normal - directionToLight;
-			const float specular = glm::pow(glm::max(glm::dot(-ray.dir, reflectDirection), 0.0f), hit.object->alpha);
+			Ray shadowRay{ hit.hitPos + directionToLight * 1e-2f, directionToLight };
 
-			return hit.object->ambient + hit.object->diffuse * diffuse + hit.object->specular * specular;
+			if (FindClosestCollision(shadowRay).dist < 0.0f ||
+				FindClosestCollision(shadowRay).dist > glm::length(light.pos - hit.hitPos))
+			{
+				// Diffuse
+				const glm::vec3 directionToLight = glm::normalize(light.pos - hit.hitPos);
+				const float diffuse = glm::max(glm::dot(hit.normal, directionToLight), 0.0f);
+
+				// Specular
+				const glm::vec3 reflectDirection = 2.0f * glm::dot(hit.normal, directionToLight) * hit.normal - directionToLight;
+				const float specular = glm::pow(glm::max(glm::dot(-ray.dir, reflectDirection), 0.0f), hit.object->alpha);
+
+				return hit.object->ambient + hit.object->diffuse * diffuse + hit.object->specular * specular;
+			}
+
+			return hit.object->ambient;
 		}
 	}
 
