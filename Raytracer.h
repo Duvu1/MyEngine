@@ -12,18 +12,27 @@ public:
 	int width, height;
 	Light light;
 	std::shared_ptr<Sphere> sphere;
+	std::vector<std::shared_ptr<Sphere>> objects;
 
 public:
 	Raytracer(const int& width, const int& height)
 		: width(width)
 		, height(height)
 	{
-		sphere = std::make_shared<Sphere>(glm::vec3(0.0f, 0.0f, 0.5f), 0.5f);
-		sphere->ambient = glm::vec3(0.0f);
-		sphere->diffuse = glm::vec3(0.0f, 1.0f, 1.0f);
-		sphere->specular = glm::vec3(1.0f);
-		sphere->alpha = 9.0f;
-		sphere->ks = 0.8;
+		sphere = std::make_shared<Sphere>(glm::vec3(0.5f, 0.0f, 0.5f), 0.5f, glm::vec3(1.0f, 0.0f, 0.0f));
+		sphere->ambient = glm::vec3(0.2f);
+		sphere->specular = glm::vec3(0.5f);
+		objects.push_back(sphere);
+
+		sphere = std::make_shared<Sphere>(glm::vec3(-0.5f, 0.0f, 0.5f), 0.5f, glm::vec3(0.0f, 1.0f, 0.0f));
+		sphere->ambient = glm::vec3(0.2f);
+		sphere->specular = glm::vec3(0.5f);
+		objects.push_back(sphere);
+		
+		sphere = std::make_shared<Sphere>(glm::vec3(0.0f, 0.5f, 0.5f), 0.5f, glm::vec3(0.0f, 0.0f, 1.0f));
+		sphere->ambient = glm::vec3(0.2f);
+		sphere->specular = glm::vec3(0.5f);
+		objects.push_back(sphere);
 
 		light = Light{ { 0.0f, 0.0f, -1.0f } }; // point lihgt
 	}
@@ -36,13 +45,33 @@ public:
 		return glm::vec3(x, y, 0.0f);
 	}
 
-	glm::vec3 traceRay(Ray& ray)
+	Hit FindClosestCollision(Ray& ray)
 	{
-		const Hit hit = sphere->IntersectRayCollision(ray);
+		float closestDist = 99999.0f;
+		Hit closestHit = Hit{ -1.0f, glm::vec3(0.0f), glm::vec3(0.0f) };
+
+		for (int l = 0; l < objects.size(); l++)
+		{
+			Hit hit = objects[l]->CheckRayCollision(ray);
+
+			if (hit.dist >= 0.0f && hit.dist < closestDist)
+			{
+				closestDist = hit.dist;
+				closestHit = hit;
+				closestHit.object = objects[l];
+			}
+		}
+
+		return closestHit;
+	}
+
+	glm::vec3 TraceRay(Ray& ray)
+	{
+		const Hit hit = FindClosestCollision(ray);
 
 		if (hit.dist < 0)
 		{
-			return glm::vec3{ 0.0f };
+			return glm::vec3(0.0f);
 		}
 		else
 		{
@@ -54,9 +83,9 @@ public:
 
 			// Specular
 			const glm::vec3 reflectDirection = 2.0f * glm::dot(hit.normal, directionToLight) * hit.normal - directionToLight;
-			const float specular = glm::pow(glm::max(glm::dot(-ray.dir, reflectDirection), 0.0f), sphere->alpha);
+			const float specular = glm::pow(glm::max(glm::dot(-ray.dir, reflectDirection), 0.0f), hit.object->alpha);
 
-			return sphere->ambient + sphere->diffuse * diffuse + sphere->specular * specular * sphere->ks;
+			return hit.object->ambient + hit.object->diffuse * diffuse + hit.object->specular * specular;
 		}
 	}
 
@@ -64,15 +93,17 @@ public:
 	{
 		std::fill(pixels.begin(), pixels.end(), glm::vec4{ 0.0f, 0.0f, 0.0f, 1.0f });
 
+		const glm::vec3 eyePos(0.0f, 0.0f, -1.5f);
+
 		for (int i = 0; i < width; i++)
 			for (int j = 0; j < height; j++)
 			{
 				glm::vec3 pixelPosWorld = TransformScreenToWorld(glm::vec2(i, j));
 				glm::vec3 rayDir = glm::vec3(0.0f, 0.0f, 1.0f);
 
-				Ray pixelRay{ pixelPosWorld, rayDir };
+				Ray pixelRay{ pixelPosWorld, glm::normalize(pixelPosWorld - eyePos) };
 
-				pixels[i + j * width] = glm::vec4(traceRay(pixelRay), 1.0f);
+				pixels[i + j * width] = glm::vec4(glm::clamp(TraceRay(pixelRay), 0.0f, 1.0f), 1.0f);
 			}
 	}
 };
