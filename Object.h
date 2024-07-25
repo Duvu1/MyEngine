@@ -16,6 +16,8 @@ public:
 	float alpha = 10.0f;
 	float ks = 0.0f;
 
+	float reflection = 0.0f;
+
 	Object(const glm::vec3& color)
 		: ambient(color)
 		, diffuse(color)

@@ -22,6 +22,8 @@ public:
 		sphere = std::make_shared<Sphere>(glm::vec3(0.5f, 0.0f, 0.5f), 0.5f, glm::vec3(1.0f, 0.0f, 0.0f));
 		sphere->ambient = glm::vec3(0.2f);
 		sphere->specular = glm::vec3(0.5f);
+		sphere->alpha = 10.0f;
+		sphere->reflection = 0.5;
 		objects.push_back(sphere);
 
 		sphere = std::make_shared<Sphere>(glm::vec3(-0.5f, 0.0f, 0.5f), 0.5f, glm::vec3(0.0f, 1.0f, 0.0f));
@@ -65,8 +67,11 @@ public:
 		return closestHit;
 	}
 
-	glm::vec3 TraceRay(Ray& ray)
+	glm::vec3 TraceRay(Ray& ray, int recursiveLevel)
 	{
+		if (recursiveLevel < 0)
+			return glm::vec3(0.0f);
+
 		const Hit hit = FindClosestCollision(ray);
 
 		if (hit.dist < 0)
@@ -75,6 +80,9 @@ public:
 		}
 		else
 		{
+			glm::vec3 color(0.0f);
+			color += hit.object->ambient;
+
 			const glm::vec3 directionToLight = glm::normalize(light.pos - hit.hitPos);
 
 			Ray shadowRay{ hit.hitPos + directionToLight * 1e-2f, directionToLight };
@@ -90,10 +98,19 @@ public:
 				const glm::vec3 reflectDirection = 2.0f * glm::dot(hit.normal, directionToLight) * hit.normal - directionToLight;
 				const float specular = glm::pow(glm::max(glm::dot(-ray.dir, reflectDirection), 0.0f), hit.object->alpha);
 
-				return hit.object->ambient + hit.object->diffuse * diffuse + hit.object->specular * specular;
+				color += hit.object->ambient + hit.object->diffuse * diffuse + hit.object->specular * specular;
 			}
 
-			return hit.object->ambient;
+			if (hit.object->reflection)
+			{
+				const glm::vec3 m = glm::dot(-ray.dir, hit.normal) * hit.normal + ray.dir;
+				const glm::vec3 reflectionDirection = glm::normalize(-ray.dir + 2.0f * m);
+				Ray reflectRay{ hit.hitPos + reflectionDirection * 1e-4f, reflectionDirection  };
+
+				color += TraceRay(reflectRay, recursiveLevel - 1) * hit.object->reflection;
+			}
+
+			return color;
 		}
 	}
 
@@ -111,7 +128,7 @@ public:
 
 				Ray pixelRay{ pixelPosWorld, glm::normalize(pixelPosWorld - eyePos) };
 
-				pixels[i + j * width] = glm::vec4(glm::clamp(TraceRay(pixelRay), 0.0f, 1.0f), 1.0f);
+				pixels[i + j * width] = glm::vec4(glm::clamp(TraceRay(pixelRay, 1), 0.0f, 1.0f), 1.0f);
 			}
 	}
 };
