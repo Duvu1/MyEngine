@@ -1,9 +1,11 @@
-Texture2D baseColorTexture : register(t0);
+Texture2D baseColorTexture0 : register(t0);
+Texture2D baseColorTexture1 : register(t1);
 SamplerState baseColorSampler : register(s0);
 
 cbuffer PSConstantBuffer : register(b0)
 {
-    bool textureOnOff;
+    float threshold;
+    float dummy[3];
 };
 
 struct PSInput
@@ -15,10 +17,9 @@ struct PSInput
 
 float4 main(PSInput input) : SV_Target
 {
-    float4 color = input.color;
-    
-    if (textureOnOff == true)
-        color = baseColorTexture.Sample(baseColorSampler, input.uv);
+    float4 color = lerp(baseColorTexture0.Sample(baseColorSampler, input.uv),
+                        baseColorTexture1.Sample(baseColorSampler, input.uv),
+                        threshold);
     
     return color;
 }

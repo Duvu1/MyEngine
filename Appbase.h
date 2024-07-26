@@ -30,7 +30,14 @@ class Appbase
 public:
 	Appbase(HWND hWnd, int width, int height)
 	{
-        m_image.ReadFromFile("image.jpg");
+        Image image;
+
+        image.ReadFromFile("image0.jpg");
+        m_image.push_back(image);
+
+        image.ReadFromFile("image1.jpg");
+        m_image.push_back(image);
+
         //m_circle = std::make_unique<Circle>(Circle({ 0.0f, 0.0f }, 0.5f, { 0.0f, 0.5f, 1.0f, 1.0f }));
         m_raytracer = std::make_unique<Raytracer>(width, height);
 
@@ -255,7 +262,8 @@ public:
         imageTextureDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
         imageTextureDesc.MiscFlags = 0;
 
-        hr = m_device->CreateTexture2D(&imageTextureDesc, NULL, m_imageTexture.GetAddressOf());
+        hr = m_device->CreateTexture2D(&imageTextureDesc, NULL, m_imageTexture0.GetAddressOf());
+        hr = m_device->CreateTexture2D(&imageTextureDesc, NULL, m_imageTexture1.GetAddressOf());
 
         if (FAILED(hr))
         {
@@ -264,7 +272,8 @@ public:
         }
         else
         {
-            m_device->CreateShaderResourceView(m_imageTexture.Get(), nullptr, m_imageSRV.GetAddressOf());
+            hr = m_device->CreateShaderResourceView(m_imageTexture0.Get(), nullptr, m_imageSRV0.GetAddressOf());
+            hr = m_device->CreateShaderResourceView(m_imageTexture1.Get(), nullptr, m_imageSRV1.GetAddressOf());
 
             //D3D11_RENDER_TARGET_VIEW_DESC RTVDesc;
             //RTVDesc.Format = textureDesc.Format;
@@ -275,9 +284,13 @@ public:
         }
 
         D3D11_MAPPED_SUBRESOURCE ms;
-        hr = m_context->Map(m_imageTexture.Get(), NULL, D3D11_MAP_WRITE_DISCARD, NULL, &ms);
-        memcpy(ms.pData, m_image.pixels.data(), m_image.pixels.size() * sizeof(glm::vec4));
-        m_context->Unmap(m_imageTexture.Get(), NULL);
+        hr = m_context->Map(m_imageTexture0.Get(), NULL, D3D11_MAP_WRITE_DISCARD, NULL, &ms);
+        memcpy(ms.pData, m_image[0].pixels.data(), m_image[0].pixels.size() * sizeof(glm::vec4));
+        m_context->Unmap(m_imageTexture0.Get(), NULL);
+
+        hr = m_context->Map(m_imageTexture1.Get(), NULL, D3D11_MAP_WRITE_DISCARD, NULL, &ms);
+        memcpy(ms.pData, m_image[1].pixels.data(), m_image[1].pixels.size() * sizeof(glm::vec4));
+        m_context->Unmap(m_imageTexture1.Get(), NULL);
 
         //////////////////////////
         // create vertex buffer //
@@ -383,14 +396,14 @@ public:
             D3D11_BUFFER_DESC bufferDesc;
             ZeroMemory(&bufferDesc, sizeof(bufferDesc));
             bufferDesc.Usage = D3D11_USAGE_DYNAMIC;                // write access access by CPU and GPU
-            bufferDesc.ByteWidth = sizeof(PSConstantBufferData);
+            bufferDesc.ByteWidth = sizeof(VSConstantBufferData);
             bufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;     // use as a constant buffer
             bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;    // allow CPU to write in buffer
             bufferDesc.MiscFlags = 0;
             bufferDesc.StructureByteStride = 0;
 
             D3D11_SUBRESOURCE_DATA constantBufferData = { 0 };
-            constantBufferData.pSysMem = &m_pixelConstantBufferData;
+            constantBufferData.pSysMem = &m_vertexConstantBufferData;
             constantBufferData.SysMemPitch = 0;
             constantBufferData.SysMemSlicePitch = 0;
 
@@ -432,8 +445,7 @@ public:
     void Update()
     {
         std::vector<glm::vec4> pixels(width * height, glm::vec4{ 1.0f, 1.0f, 1.0f, 1.0f });
-
-        m_raytracer->Render(pixels);
+        //m_raytracer->Render(pixels);
 
         ///////////////////
         // update canvas //
@@ -478,21 +490,29 @@ public:
         m_context->IASetIndexBuffer(m_indexBuffer.Get(), DXGI_FORMAT_R16_UINT, 0);
 
         m_context->PSSetSamplers(0, 1, m_samplerState.GetAddressOf());
-        m_context->PSSetShaderResources(0, 1, m_imageSRV.GetAddressOf());
+
+        if (m_textureOn == true)
+        {
+            ID3D11ShaderResourceView* ary[2] = { m_imageSRV0.Get(), m_imageSRV1.Get() };
+            m_context->PSSetShaderResources(0, 2, ary);
+        }
+        else
+        {
+            m_context->PSSetShaderResources(0, 1, m_canvasSRV.GetAddressOf());
+        }
         m_context->PSSetConstantBuffers(0, 1, m_pixelConstantBuffer.GetAddressOf());
         m_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
         m_context->DrawIndexed(indexCount, 0, 0);
 
         //m_context->VSSetShader(m_vertexShader.Get(), 0, 0);
-        m_context->PSSetShader(m_pixelShader.Get(), 0, 0);
-        m_context->IASetVertexBuffers(0, 1, m_vertexBuffer1.GetAddressOf(), &stride, &offset);
-        m_context->PSSetShaderResources(0, 1, m_canvasSRV.GetAddressOf());
-        m_context->DrawIndexed(indexCount, 0, 0);
+        //m_context->PSSetShader(m_pixelShader.Get(), 0, 0);
+        //m_context->IASetVertexBuffers(0, 1, m_vertexBuffer1.GetAddressOf(), &stride, &offset);
+        //m_context->PSSetShaderResources(0, 1, m_canvasSRV.GetAddressOf());
+        //m_context->DrawIndexed(indexCount, 0, 0);
     }
 
     void Clean()
     {
-
     }
 
 public:
@@ -502,7 +522,8 @@ public:
     ComPtr<ID3D11Texture2D> m_backBuffer;
 
     ComPtr<ID3D11RenderTargetView> m_RTV;
-    ComPtr<ID3D11ShaderResourceView> m_imageSRV;
+    ComPtr<ID3D11ShaderResourceView> m_imageSRV0;
+    ComPtr<ID3D11ShaderResourceView> m_imageSRV1;
     ComPtr<ID3D11RenderTargetView> m_imageRTV;
     ComPtr<ID3D11ShaderResourceView> m_canvasSRV;
     ComPtr<ID3D11RenderTargetView> m_canvasRTV;
@@ -527,7 +548,8 @@ public:
     Vector3 m_viewUp = { 0.0f, 1.0f, 0.0f };
 
     ComPtr<ID3D11Texture2D> m_canvasTexture;
-    ComPtr<ID3D11Texture2D> m_imageTexture;
+    ComPtr<ID3D11Texture2D> m_imageTexture0;
+    ComPtr<ID3D11Texture2D> m_imageTexture1;
 
     struct VSConstantBufferData
     {
@@ -538,21 +560,19 @@ public:
 
     struct PSConstantBufferData
     {
-        bool textureOnOff = false;
-        bool dummy0;
-        char dummy1;
-        int  dummy2;
-        double dummy3;
+        float threshold = 0.5f;
+        float dummy[3];
     };
 
     PSConstantBufferData m_pixelConstantBufferData;
 
     float initColor[4] = { 0.5f, 0.5f, 0.5f, 1.0f };
 
-    Image m_image;
+    std::vector<Image> m_image;
     std::unique_ptr<Circle> m_circle;
     std::unique_ptr<Raytracer> m_raytracer;
 
     int width, height;
+    bool m_textureOn = false;
 };
 
