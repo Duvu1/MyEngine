@@ -24,5 +24,5 @@ public:
 		, specular(color)
 	{}
 
-	virtual Hit CheckRayCollision(Ray& ray) = 0;
+	virtual Hit CheckRayCollision(MyRay& ray) = 0;
 };

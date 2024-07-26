@@ -13,9 +13,10 @@ public:
 		: center(center)
 		, radius(radius)
 		, Object(color)
-	{}
+	{
+	}
 
-	Hit CheckRayCollision(Ray& ray)
+	Hit CheckRayCollision(MyRay& ray)
 	{
 		Hit hit = Hit{ -1.0f, glm::vec3(0.0f), glm::vec3(0.0f) }; // d가 음수이면 충돌하지 않은 것
 

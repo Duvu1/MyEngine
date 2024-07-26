@@ -54,6 +54,12 @@
     <ClInclude Include="Object.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="Triangle.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Square.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MyEngine.cpp">
@@ -86,5 +92,6 @@
     <FxCompile Include="VS.hlsl" />
     <FxCompile Include="PS.hlsl" />
     <FxCompile Include="ImagePS.hlsl" />
+    <FxCompile Include="ImageVS.hlsl" />
   </ItemGroup>
 </Project>

@@ -39,7 +39,6 @@ public:
 
     ~Appbase()
     {
-        
     }
 
 
@@ -66,6 +65,13 @@ public:
         m_device->CreateVertexShader(vertexBlob->GetBufferPointer(), vertexBlob->GetBufferSize(), NULL, m_vertexShader.GetAddressOf());
         m_device->CreatePixelShader(pixelBlob->GetBufferPointer(), pixelBlob->GetBufferSize(), NULL, m_pixelShader.GetAddressOf());
 
+        if (FAILED(D3DCompileFromFile(L"ImageVS.hlsl", 0, 0, "main", "vs_5_0", 0, 0, &vertexBlob, &errorBlob)))
+        {
+            if (errorBlob) {
+                std::cout << "Vertex shader compile error\n" << (char*)errorBlob->GetBufferPointer() << std::endl;
+            }
+        }
+        
         if (FAILED(D3DCompileFromFile(L"ImagePS.hlsl", 0, 0, "main", "ps_5_0", 0, 0, &pixelBlob, &errorBlob)))
         {
             if (errorBlob) {
@@ -73,6 +79,7 @@ public:
             }
         }
 
+        m_device->CreateVertexShader(vertexBlob->GetBufferPointer(), vertexBlob->GetBufferSize(), NULL, m_imageVertexShader.GetAddressOf());
         m_device->CreatePixelShader(pixelBlob->GetBufferPointer(), pixelBlob->GetBufferSize(), NULL, m_imagePixelShader.GetAddressOf());
 
         /////////////////////////////////
@@ -369,28 +376,54 @@ public:
             };
         }
 
-        ////////////////////////////
-        // create constant buffer //
-        ////////////////////////////
+        ///////////////////////////////////
+        // create vertex constant buffer //
+        ///////////////////////////////////
         {
             D3D11_BUFFER_DESC bufferDesc;
             ZeroMemory(&bufferDesc, sizeof(bufferDesc));
             bufferDesc.Usage = D3D11_USAGE_DYNAMIC;                // write access access by CPU and GPU
-            bufferDesc.ByteWidth = sizeof(ConstantBufferData);
+            bufferDesc.ByteWidth = sizeof(PSConstantBufferData);
+            bufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;     // use as a constant buffer
+            bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;    // allow CPU to write in buffer
+            bufferDesc.MiscFlags = 0;
+            bufferDesc.StructureByteStride = 0;
+
+            D3D11_SUBRESOURCE_DATA constantBufferData = { 0 };
+            constantBufferData.pSysMem = &m_pixelConstantBufferData;
+            constantBufferData.SysMemPitch = 0;
+            constantBufferData.SysMemSlicePitch = 0;
+
+            hr = m_device->CreateBuffer(&bufferDesc, &constantBufferData, m_vertexConstantBuffer.GetAddressOf());
+
+            if (FAILED(hr)) {
+                std::cout << "Failed: CreateBuffer()_VSConstant" << std::endl;
+                return;
+            };
+        }
+
+        //////////////////////////////////
+        // create pixel constant buffer //
+        //////////////////////////////////
+        {
+            D3D11_BUFFER_DESC bufferDesc;
+            ZeroMemory(&bufferDesc, sizeof(bufferDesc));
+            bufferDesc.Usage = D3D11_USAGE_DYNAMIC;                // write access access by CPU and GPU
+            bufferDesc.ByteWidth = sizeof(PSConstantBufferData);
             bufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;     // use as a constant buffer
             bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;    // allow CPU to write in buffer
             bufferDesc.MiscFlags = 0;
             bufferDesc.StructureByteStride = 0;
         
             D3D11_SUBRESOURCE_DATA constantBufferData = { 0 };
-            constantBufferData.pSysMem = &m_constantBufferData;
+            constantBufferData.pSysMem = &m_pixelConstantBufferData;
             constantBufferData.SysMemPitch = 0;
             constantBufferData.SysMemSlicePitch = 0;
         
-            hr = m_device->CreateBuffer(&bufferDesc, &constantBufferData, m_constantBuffer.GetAddressOf());
+            hr = m_device->CreateBuffer(&bufferDesc, &constantBufferData, m_pixelConstantBuffer.GetAddressOf());
 
             if (FAILED(hr)) {
-                std::cout << "Failed: CreateBuffer()_Constant" << std::endl;
+                std::cout << "Failed: CreateBuffer()_PSConstant" << std::endl;
                 return;
             };
         }
@@ -402,19 +435,32 @@ public:
 
         m_raytracer->Render(pixels);
 
-        // update canvas
+        ///////////////////
+        // update canvas //
+        ///////////////////
         D3D11_MAPPED_SUBRESOURCE ms;
         m_context->Map(m_canvasTexture.Get(), NULL, D3D11_MAP_WRITE_DISCARD, NULL, &ms);
         //memcpy(ms.pData, m_image.pixels.data(), m_image.pixels.size() * sizeof(glm::vec4));
         memcpy(ms.pData, pixels.data(), pixels.size() * sizeof(glm::vec4));
         m_context->Unmap(m_canvasTexture.Get(), NULL);
 
-        // update constant buffer
+        //////////////////////////////////
+        // update pixel constant buffer //
+        //////////////////////////////////
         //m_context->UpdateSubresource(m_constantBuffer.Get(), 0, nullptr, &m_constantBufferData, 0, 0);
-        //D3D11_MAPPED_SUBRESOURCE ms;
-        m_context->Map(m_constantBuffer.Get(), NULL, D3D11_MAP_WRITE_DISCARD, NULL, &ms);
-        memcpy(ms.pData, &m_constantBufferData, sizeof(ConstantBufferData));
-        m_context->Unmap(m_constantBuffer.Get(), NULL);
+        m_context->Map(m_pixelConstantBuffer.Get(), NULL, D3D11_MAP_WRITE_DISCARD, NULL, &ms);
+        memcpy(ms.pData, &m_pixelConstantBufferData, sizeof(PSConstantBufferData));
+        m_context->Unmap(m_pixelConstantBuffer.Get(), NULL);
+
+        ////////////////////////
+        // update view matrix //
+        ////////////////////////
+        //m_vertexConstantBufferData.view = XMMatrixLookToLH(m_viewPos, m_viewDir, m_viewUp);
+        //m_vertexConstantBufferData.view = m_vertexConstantBufferData.view.Transpose();
+        //
+        //m_context->Map(m_vertexConstantBuffer.Get(), NULL, D3D11_MAP_WRITE_DISCARD, NULL, &ms);
+        //memcpy(ms.pData, &m_vertexConstantBufferData, sizeof(VSConstantBufferData));
+        //m_context->Unmap(m_vertexConstantBuffer.Get(), NULL);
     }
 
     void Render()
@@ -423,7 +469,7 @@ public:
         m_context->OMSetRenderTargets(1, m_RTV.GetAddressOf(), nullptr);
         m_context->ClearRenderTargetView(m_RTV.Get(), initColor);
 
-        m_context->VSSetShader(m_vertexShader.Get(), 0, 0);
+        m_context->VSSetShader(m_imageVertexShader.Get(), 0, 0);
         m_context->PSSetShader(m_imagePixelShader.Get(), 0, 0);
 
         UINT stride = sizeof(Vertex);
@@ -433,10 +479,11 @@ public:
 
         m_context->PSSetSamplers(0, 1, m_samplerState.GetAddressOf());
         m_context->PSSetShaderResources(0, 1, m_imageSRV.GetAddressOf());
-        m_context->PSSetConstantBuffers(0, 1, m_constantBuffer.GetAddressOf());
+        m_context->PSSetConstantBuffers(0, 1, m_pixelConstantBuffer.GetAddressOf());
         m_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
         m_context->DrawIndexed(indexCount, 0, 0);
 
+        //m_context->VSSetShader(m_vertexShader.Get(), 0, 0);
         m_context->PSSetShader(m_pixelShader.Get(), 0, 0);
         m_context->IASetVertexBuffers(0, 1, m_vertexBuffer1.GetAddressOf(), &stride, &offset);
         m_context->PSSetShaderResources(0, 1, m_canvasSRV.GetAddressOf());
@@ -462,21 +509,34 @@ public:
     ComPtr<ID3D11SamplerState> m_samplerState;
     D3D11_VIEWPORT m_viewport;
 
+    ComPtr<ID3D11VertexShader> m_imageVertexShader;
+    ComPtr<ID3D11PixelShader> m_imagePixelShader;
     ComPtr<ID3D11VertexShader> m_vertexShader;
     ComPtr<ID3D11PixelShader> m_pixelShader;
-    ComPtr<ID3D11PixelShader> m_imagePixelShader;
     ComPtr<ID3D11InputLayout> m_inputLayout;
 
     ComPtr<ID3D11Buffer> m_vertexBuffer0;
     ComPtr<ID3D11Buffer> m_vertexBuffer1;
     ComPtr<ID3D11Buffer> m_indexBuffer;
     UINT indexCount;
-    ComPtr<ID3D11Buffer> m_constantBuffer;
+    ComPtr<ID3D11Buffer> m_vertexConstantBuffer;
+    ComPtr<ID3D11Buffer> m_pixelConstantBuffer;
+
+    Vector3 m_viewPos = { 0.0f, 0.0f, -1.0f };
+    Vector3 m_viewDir = { 0.0f, 0.0f, 1.0f };
+    Vector3 m_viewUp = { 0.0f, 1.0f, 0.0f };
 
     ComPtr<ID3D11Texture2D> m_canvasTexture;
     ComPtr<ID3D11Texture2D> m_imageTexture;
 
-    struct ConstantBufferData
+    struct VSConstantBufferData
+    {
+        Matrix view;
+    };
+
+    VSConstantBufferData m_vertexConstantBufferData;
+
+    struct PSConstantBufferData
     {
         bool textureOnOff = false;
         bool dummy0;
@@ -485,7 +545,7 @@ public:
         double dummy3;
     };
 
-    ConstantBufferData m_constantBufferData;
+    PSConstantBufferData m_pixelConstantBufferData;
 
     float initColor[4] = { 0.5f, 0.5f, 0.5f, 1.0f };
 

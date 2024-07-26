@@ -1,8 +1,3 @@
-cbuffer MVP : register(b0)
-{
-    matrix view;
-};
-
 struct VSInput
 {
     float4 position : POSITION;
@@ -21,7 +16,7 @@ VSOutput main(VSInput input)
 {
     VSOutput output;
     
-    output.position = mul(input.position, view);
+    output.position = input.position;
     output.color = input.color;
     output.uv = input.uv;
     

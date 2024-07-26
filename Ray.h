@@ -2,7 +2,7 @@
 
 #include "framework.h"
 
-class Ray
+class MyRay
 {
 public:
 	glm::vec3 start;
