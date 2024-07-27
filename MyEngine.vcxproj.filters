@@ -60,6 +60,9 @@
     <ClInclude Include="Square.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="ExampleApp.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MyEngine.cpp">
@@ -72,6 +75,9 @@
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="Circle.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="ExampleApp.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>

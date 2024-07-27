@@ -17,7 +17,9 @@ struct PSInput
 
 float4 main(PSInput input) : SV_Target
 {
-    float4 color = lerp(baseColorTexture0.Sample(baseColorSampler, input.uv),
+    float4 color;
+    
+    color = lerp(baseColorTexture0.Sample(baseColorSampler, input.uv),
                         baseColorTexture1.Sample(baseColorSampler, input.uv),
                         threshold);
     
