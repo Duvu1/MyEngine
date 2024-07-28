@@ -13,7 +13,7 @@ ExampleApp::ExampleApp()
     image.ReadFromFile("image1.jpg");
     m_images.push_back(image);
 
-    m_circle = std::make_unique<Circle>(Circle({ 0.0f, 0.0f }, 0.5f, { 0.0f, 0.5f, 1.0f, 1.0f }));
+    m_circle = std::make_unique<Circle>(Circle({ 0.0f, 0.0f }, 300.0f, { 0.0f, 0.5f, 1.0f, 1.0f }));
     m_raytracer = std::make_unique<Raytracer>(m_width, m_height);
 }
 
@@ -380,14 +380,14 @@ void ExampleApp::Update()
             for (int i = 0; i < m_width; i++)
                 for (int j = 0; j < m_height; j++)
                 {
-                    float positionX = (float)(i - m_width / 2) / (m_height / 2);
-                    float positionY = -(float)(j - m_height / 2) / (m_height / 2);
+                    //float positionScreenX = (float)(i - m_width / 2) / (m_height / 2);
+                    //float positionScreenY = -(float)(j - m_height / 2) / (m_height / 2);
+                    float positionScreenX = i - m_width / 2;
+                    float positionScreenY = -(j - m_height / 2);
 
-                    if (m_circle->IsInside(glm::vec2(positionX, positionY)))
+                    if (m_circle->IsInside(glm::vec2(positionScreenX, positionScreenY)))
                         pixels[i + m_width * j] = m_circle->color;
                 }
-
-            cout << m_circle->center.x << " " << m_circle->center.y << endl;
 
             // update canvas 
             D3D11_MAPPED_SUBRESOURCE ms;
@@ -442,6 +442,28 @@ void ExampleApp::Render()
             m_context->PSSetShaderResources(0, 1, m_canvasSRV.GetAddressOf());
         }
 
+        if (m_isLButtonPressed)
+        {
+            m_curMousePos = GetMousePos();
+            std::cout << "Mouse " << m_curMousePos.x << " " << m_curMousePos.y << std::endl;
+
+            if (m_circle->IsInside(m_curMousePos) && !m_isDragging)
+            {
+                m_isDragging = true;
+                m_prevMousePos = m_curMousePos;
+            }
+            else if (m_isDragging)
+            {
+                glm::vec2 translation = m_curMousePos - m_prevMousePos;
+
+                cout << "Cur " << m_curMousePos.x << " " << m_curMousePos.y << endl;
+                cout << "Prev " << m_prevMousePos.x << " " << m_prevMousePos.y << endl;
+
+                m_circle->center += translation;
+                m_prevMousePos = m_curMousePos;
+            }
+        }
+
         m_context->PSSetConstantBuffers(0, 1, m_pixelConstantBuffer.GetAddressOf());
         m_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
         m_context->DrawIndexed(indexCount, 0, 0);
@@ -480,8 +502,8 @@ void ExampleApp::UpdateGUI()
         if (!m_textureOn)
         {
             ImGui::Text("Circle");
-            ImGui::SliderFloat2("Position", &m_circle->center.x, -m_width / m_height, m_width / m_height);
-            ImGui::SliderFloat("Radius", &m_circle->radius, 0.0f, 3.0f);
+            ImGui::SliderFloat2("Position", &m_circle->center.x, -m_height / 2, m_height / 2);
+            ImGui::SliderFloat("Radius", &m_circle->radius, 0.0f, 1000.0f);
             ImGui::SliderFloat3("Color", &m_circle->color.r, 0.0f, 1.0f);
             ImGui::SliderFloat3("Backround Color", m_initColor, 0.0f, 1.0f);
         }

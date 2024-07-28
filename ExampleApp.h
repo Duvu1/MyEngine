@@ -55,5 +55,8 @@ public:
     std::unique_ptr<Circle> m_circle;
 
     bool m_textureOn = false;
+
+    glm::vec2 m_prevMousePos = { 0, 0 };
+    glm::vec2 m_curMousePos;
 };
 

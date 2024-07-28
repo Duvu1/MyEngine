@@ -232,10 +232,17 @@ LRESULT Appbase::MsgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             return 0;
         break;
     case WM_MOUSEMOVE:
-        std::cout << "Mouse " << LOWORD(lParam) << " " << HIWORD(lParam) << std::endl;
+        //std::cout << "Mouse " << LOWORD(lParam) << " " << HIWORD(lParam) << std::endl;
+        SetMousePos(LOWORD(lParam), HIWORD(lParam));
+        break;
+    case WM_LBUTTONDOWN:
+        std::cout << "WM_LBUTTONDOWN Left mouse button" << std::endl;
+        m_isLButtonPressed = true;
         break;
     case WM_LBUTTONUP:
         std::cout << "WM_LBUTTONUP Left mouse button" << std::endl;
+        m_isDragging = false;
+        m_isLButtonPressed = false;
         break;
     case WM_RBUTTONUP:
         std::cout << "WM_RBUTTONUP Right mouse button" << std::endl;
@@ -289,4 +296,29 @@ int Appbase::Run()
     }
 
     return 0;
+}
+
+void Appbase::SetMousePos(int posX, int posY)
+{
+    int clampPosX = posX;
+    int clampPosY = posY;
+
+    if (clampPosX > 60000)
+        clampPosX = 0;
+    else if (clampPosX > m_width)
+        clampPosX = m_width;
+
+    if (clampPosY > 60000)
+        clampPosY = 0;
+    else if (clampPosY > m_height)
+        clampPosY = m_height;
+
+
+    m_mousePosX = clampPosX - m_width / 2;
+    m_mousePosY = -(clampPosY - m_height / 2);
+}
+
+glm::vec2 Appbase::GetMousePos()
+{
+    return glm::vec2(m_mousePosX, m_mousePosY);
 }

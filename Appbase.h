@@ -45,6 +45,9 @@ public:
     }
     void Clean();
 
+    glm::vec2 GetMousePos();
+    void SetMousePos(int posX, int posY);
+
 public:
     HWND m_hWnd;
 
@@ -77,5 +80,11 @@ public:
     ComPtr<ID3D11VertexShader> m_vertexShader3D;
     ComPtr<ID3D11PixelShader> m_pixelShader3D;
 
+    // 
+    int m_mousePosX;
+    int m_mousePosY;
+    bool m_isLButtonPressed = false;
+
+    bool m_isDragging = false;
 };
 
