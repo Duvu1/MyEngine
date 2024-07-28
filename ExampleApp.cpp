@@ -1,5 +1,7 @@
 #include "ExampleApp.h"
 
+using namespace std;
+
 ExampleApp::ExampleApp()
     : Appbase()
 {
@@ -366,31 +368,48 @@ bool ExampleApp::InitShaders()
 
 void ExampleApp::Update()
 {
-    std::vector<Vector4> pixels(m_width * m_height, Vector4(m_initColor));
-    //m_raytracer->Render(pixels);
+    if (m_dimension == 2)
+    {
+        // update pixel constant buffer
+        UpdateBuffer(m_pixelConstantBuffer, m_pixelConstantBufferData);
 
-    ///////////////////
-    // update canvas //
-    ///////////////////
-    D3D11_MAPPED_SUBRESOURCE ms;
-    m_context->Map(m_canvasTexture.Get(), NULL, D3D11_MAP_WRITE_DISCARD, NULL, &ms);
-    memcpy(ms.pData, pixels.data(), pixels.size() * sizeof(Vector4));
-    m_context->Unmap(m_canvasTexture.Get(), NULL);
+        if (!m_textureOn)
+        {
+            std::vector<glm::vec4> pixels(m_width * m_height, glm::vec4(m_initColor[0], m_initColor[1], m_initColor[2], m_initColor[3]));
 
-    //////////////////////////////////
-    // update pixel constant buffer //
-    //////////////////////////////////
-    UpdateBuffer(m_pixelConstantBuffer, m_pixelConstantBufferData);
+            for (int i = 0; i < m_width; i++)
+                for (int j = 0; j < m_height; j++)
+                {
+                    float positionX = (float)(i - m_width / 2) / (m_height / 2);
+                    float positionY = -(float)(j - m_height / 2) / (m_height / 2);
 
-    ////////////////////////
-    // update view matrix //
-    ////////////////////////
-    //m_vertexConstantBufferData.view = XMMatrixLookToLH(m_viewPos, m_viewDir, m_viewUp);
-    //m_vertexConstantBufferData.view = m_vertexConstantBufferData.view.Transpose();
-    //
-    //m_context->Map(m_vertexConstantBuffer.Get(), NULL, D3D11_MAP_WRITE_DISCARD, NULL, &ms);
-    //memcpy(ms.pData, &m_vertexConstantBufferData, sizeof(VSConstantBufferData));
-    //m_context->Unmap(m_vertexConstantBuffer.Get(), NULL);
+                    if (m_circle->IsInside(glm::vec2(positionX, positionY)))
+                        pixels[i + m_width * j] = m_circle->color;
+                }
+
+            cout << m_circle->center.x << " " << m_circle->center.y << endl;
+
+            // update canvas 
+            D3D11_MAPPED_SUBRESOURCE ms;
+            m_context->Map(m_canvasTexture.Get(), NULL, D3D11_MAP_WRITE_DISCARD, NULL, &ms);
+            memcpy(ms.pData, pixels.data(), pixels.size() * sizeof(glm::vec4));
+            m_context->Unmap(m_canvasTexture.Get(), NULL);
+        }
+    }
+    else if (m_dimension == 3)
+    {
+        //m_raytracer->Render(pixels);
+
+        ////////////////////////
+        // update view matrix //
+        ////////////////////////
+        //m_vertexConstantBufferData.view = XMMatrixLookToLH(m_viewPos, m_viewDir, m_viewUp);
+        //m_vertexConstantBufferData.view = m_vertexConstantBufferData.view.Transpose();
+        //
+        //m_context->Map(m_vertexConstantBuffer.Get(), NULL, D3D11_MAP_WRITE_DISCARD, NULL, &ms);
+        //memcpy(ms.pData, &m_vertexConstantBufferData, sizeof(VSConstantBufferData));
+        //m_context->Unmap(m_vertexConstantBuffer.Get(), NULL);
+    }
 }
 
 void ExampleApp::Render()
@@ -455,13 +474,17 @@ void ExampleApp::UpdateGUI()
     if (m_dimension == 2)
     {
         ImGui::Text("Image");
-        ImGui::SliderFloat3("Backround Color", m_initColor, 0.0f, 1.0f);
         ImGui::Checkbox("Image Texture", &m_textureOn);
         ImGui::SliderFloat("Threshold", &m_pixelConstantBufferData.threshold, 0.0f, 1.0f);
-        //ImGui::Text("Circle");
-        //ImGui::SliderFloat2("Position", &m_circle->center.x, -m_width / m_height, m_width / m_height);
-        //ImGui::SliderFloat("Radius", &m_circle->radius, 0.0f, 3.0f);
-        //ImGui::SliderFloat3("Color", &m_circle->color.r, 0.0f, 1.0f);
+
+        if (!m_textureOn)
+        {
+            ImGui::Text("Circle");
+            ImGui::SliderFloat2("Position", &m_circle->center.x, -m_width / m_height, m_width / m_height);
+            ImGui::SliderFloat("Radius", &m_circle->radius, 0.0f, 3.0f);
+            ImGui::SliderFloat3("Color", &m_circle->color.r, 0.0f, 1.0f);
+            ImGui::SliderFloat3("Backround Color", m_initColor, 0.0f, 1.0f);
+        }
     }
     else if (m_dimension == 3)
     {

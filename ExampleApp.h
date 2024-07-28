@@ -12,7 +12,7 @@ struct VSConstantBufferData
 
 struct PSConstantBufferData
 {
-    float threshold = 0.5f;
+    float threshold = 0.0f;
     float dummy[3];
 };
 
@@ -30,7 +30,7 @@ public:
     void UpdateGUI();
 
 public:
-    int m_dimension = 0;
+    int m_dimension = 2;
     std::unique_ptr<Raytracer> m_raytracer;
 
     ComPtr<ID3D11Buffer> m_vertexBuffer2D;

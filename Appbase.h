@@ -49,7 +49,7 @@ public:
     HWND m_hWnd;
 
     int m_width, m_height;
-    FLOAT m_initColor[4] = {0.5f, 0.5f, 0.5f, 1.0f};
+    FLOAT m_initColor[4] = {1.0f, 1.0f, 1.0f, 1.0f};
 
     //
     ComPtr<ID3D11Device> m_device;
