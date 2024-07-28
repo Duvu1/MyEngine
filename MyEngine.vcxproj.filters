@@ -95,9 +95,9 @@
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="VS.hlsl" />
-    <FxCompile Include="PS.hlsl" />
-    <FxCompile Include="ImagePS.hlsl" />
-    <FxCompile Include="ImageVS.hlsl" />
+    <FxCompile Include="VS3D.hlsl" />
+    <FxCompile Include="PS3D.hlsl" />
+    <FxCompile Include="PS2D.hlsl" />
+    <FxCompile Include="VS2D.hlsl" />
   </ItemGroup>
 </Project>

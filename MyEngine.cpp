@@ -5,7 +5,6 @@
 #include "MyEngine.h"
 #include "ExampleApp.h"
 
-
 // 이 코드 모듈에 포함된 함수의 선언을 전달합니다:
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
@@ -13,8 +12,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                      _In_ LPWSTR    lpCmdLine,
                      _In_ int       nCmdShow)
 {
+    UNREFERENCED_PARAMETER(hInstance);
     UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(lpCmdLine);
+    UNREFERENCED_PARAMETER(nCmdShow);
 
     ExampleApp example;
 

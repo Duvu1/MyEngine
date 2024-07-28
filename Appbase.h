@@ -35,15 +35,23 @@ public:
     virtual void Render() = 0;
     virtual void UpdateGUI() = 0;
 
-    void Clean()
+    template <typename T>
+    void UpdateBuffer(ComPtr<ID3D11Buffer>& buffer, const T& bufferData)
     {
+        D3D11_MAPPED_SUBRESOURCE ms;
+        m_context->Map(buffer.Get(), NULL, D3D11_MAP_WRITE_DISCARD, NULL, &ms);
+        memcpy(ms.pData, &bufferData, sizeof(bufferData));
+        m_context->Unmap(buffer.Get(), NULL);
     }
+    void Clean();
 
 public:
     HWND m_hWnd;
 
     int m_width, m_height;
+    FLOAT m_initColor[4] = {0.5f, 0.5f, 0.5f, 1.0f};
 
+    //
     ComPtr<ID3D11Device> m_device;
     ComPtr<ID3D11DeviceContext> m_context;
 
@@ -53,19 +61,21 @@ public:
     D3D11_VIEWPORT m_viewport;
     ComPtr<ID3D11SamplerState> m_samplerState;
 
-    ComPtr<ID3D11ShaderResourceView> m_imageSRV0;
-    ComPtr<ID3D11ShaderResourceView> m_imageSRV1;
+    //
+    std::vector<ComPtr<ID3D11ShaderResourceView>> m_imageSRVs;
     ComPtr<ID3D11RenderTargetView> m_imageRTV;
 
     ComPtr<ID3D11ShaderResourceView> m_canvasSRV;
     ComPtr<ID3D11RenderTargetView> m_canvasRTV;
 
-    ComPtr<ID3D11VertexShader> m_imageVertexShader;
-    ComPtr<ID3D11PixelShader> m_imagePixelShader;
-    ComPtr<ID3D11VertexShader> m_vertexShader;
-    ComPtr<ID3D11PixelShader> m_pixelShader;
+    //
     ComPtr<ID3D11InputLayout> m_inputLayout;
 
-    float m_initColor[4] = { 0.5f, 0.5f, 0.5f, 1.0f };
+    ComPtr<ID3D11VertexShader> m_vertexShader2D;
+    ComPtr<ID3D11PixelShader> m_pixelShader2D;
+
+    ComPtr<ID3D11VertexShader> m_vertexShader3D;
+    ComPtr<ID3D11PixelShader> m_pixelShader3D;
+
 };
 

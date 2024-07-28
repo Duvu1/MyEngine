@@ -41,13 +41,13 @@ bool Appbase::Initialize()
 
     if (!InitApp())
     {
-        cout << "Failed: InitMainWindow()" << endl;
+        cout << "Failed: InitApp()" << endl;
         return false;
     }
 
     if (!InitGUI())
     {
-        cout << "Failed: InitMainWindow()" << endl;
+        cout << "Failed: InitGUI()" << endl;
         return false;
     }
 
@@ -107,6 +107,8 @@ bool Appbase::InitMainWindow()
 
 bool Appbase::InitApp()
 {
+    HRESULT hr = S_OK;
+    
     //////////////////////
     // create swapchain //
     //////////////////////
@@ -129,8 +131,8 @@ bool Appbase::InitApp()
         D3D_FEATURE_LEVEL_10_0,
     };
 
-    HRESULT hr = S_OK;
     D3D_FEATURE_LEVEL FeatureLevel;
+
     hr = D3D11CreateDeviceAndSwapChain(
         NULL,
         D3D_DRIVER_TYPE_HARDWARE,
@@ -181,27 +183,6 @@ bool Appbase::InitApp()
     m_viewport.TopLeftY = 0;
 
     m_context->RSSetViewports(1, &m_viewport);
-
-    //////////////////////////
-    // create sampler state //
-    //////////////////////////
-    D3D11_SAMPLER_DESC samplerDesc;
-    ZeroMemory(&samplerDesc, sizeof(samplerDesc));
-    samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT; // D3D11_FILTER_MIN_MAG_MIP_LINEAR
-    samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
-    samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
-    samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
-    samplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
-    samplerDesc.MinLOD = 0;
-    samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
-
-    hr = m_device->CreateSamplerState(&samplerDesc, m_samplerState.GetAddressOf());
-
-    if (FAILED(hr))
-    {
-        cout << "Failed: CreateSamplerState()" << endl;
-        return false;
-    }
 
     return true;
 }
