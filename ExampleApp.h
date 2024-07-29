@@ -30,8 +30,10 @@ public:
     void UpdateGUI();
 
 public:
-    int m_dimension = 2;
+    int m_dimension = 3;
     std::unique_ptr<Raytracer> m_raytracer;
+
+    ComPtr<ID3D11SamplerState> m_samplerState;
 
     ComPtr<ID3D11Buffer> m_vertexBuffer2D;
     ComPtr<ID3D11Buffer> m_vertexBuffer3D;

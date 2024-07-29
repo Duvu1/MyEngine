@@ -29,6 +29,8 @@ Appbase::~Appbase()
     ImGui_ImplDX11_Shutdown();
     ImGui_ImplWin32_Shutdown();
     ImGui::DestroyContext();
+
+    DestroyWindow(m_hWnd);
 }
 
 bool Appbase::Initialize()
@@ -254,10 +256,10 @@ LRESULT Appbase::MsgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         PostQuitMessage(0);
         break;
     default:
-        return DefWindowProc(hWnd, message, wParam, lParam);
+        break;
     }
 
-    return 0;
+    return DefWindowProc(hWnd, message, wParam, lParam);
 }
 
 int Appbase::Run()
@@ -312,7 +314,6 @@ void Appbase::SetMousePos(int posX, int posY)
         clampPosY = 0;
     else if (clampPosY > m_height)
         clampPosY = m_height;
-
 
     m_mousePosX = clampPosX - m_width / 2;
     m_mousePosY = -(clampPosY - m_height / 2);

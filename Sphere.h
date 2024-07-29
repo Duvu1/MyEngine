@@ -5,8 +5,8 @@
 class Sphere : public Object
 {
 public:
-	glm::vec3 center;
-	float radius;
+	glm::vec3	center;
+	float		radius;
 
 public:
 	Sphere(glm::vec3 center, float radius, glm::vec3 color)
@@ -16,6 +16,18 @@ public:
 	{
 	}
 
+	// when draw 2D circle
+	bool IsInside(const glm::vec2& pos)
+	{
+		glm::vec2 center2D = { center.x, center.y };
+
+		if (glm::dot(pos - center2D, pos - center2D) < radius * radius)
+			return true;
+		else
+			return false;
+	}
+
+	// when draw 3D sphere
 	Hit CheckRayCollision(MyRay& ray)
 	{
 		Hit hit = Hit{ -1.0f, glm::vec3(0.0f), glm::vec3(0.0f) }; // d가 음수이면 충돌하지 않은 것

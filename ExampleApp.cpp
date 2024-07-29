@@ -13,7 +13,7 @@ ExampleApp::ExampleApp()
     image.ReadFromFile("image1.jpg");
     m_images.push_back(image);
 
-    m_circle = std::make_unique<Circle>(Circle({ 0.0f, 0.0f }, 300.0f, { 0.0f, 0.5f, 1.0f, 1.0f }));
+    //m_circle = std::make_unique<Circle>(Circle({ 0.0f, 0.0f }, 150.0f, { 0.0f, 1.0f, 1.0f, 1.0f }));
     m_raytracer = std::make_unique<Raytracer>(m_width, m_height);
 }
 
@@ -193,10 +193,10 @@ bool ExampleApp::Initialize()
     {
         const std::vector<Vertex> vertices =
         {
-            { { -0.8f, -0.8f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f } },
-            { { -0.8f,  0.8f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f } },
-            { {  0.8f,  0.8f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f, 0.0f }, { 1.0f, 0.0f } },
-            { {  0.8f, -0.8f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f } },
+            { { -1.0f, -1.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f } },
+            { { -1.0f,  1.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f } },
+            { {  1.0f,  1.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f, 0.0f }, { 1.0f, 0.0f } },
+            { {  1.0f, -1.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f } },
         };
 
         D3D11_BUFFER_DESC bufferDesc;
@@ -311,6 +311,8 @@ bool ExampleApp::Initialize()
 
 bool ExampleApp::InitShaders()
 {
+    HRESULT hr = S_OK;
+
     ID3DBlob* vertexBlob = nullptr;
     ID3DBlob* pixelBlob = nullptr;
     ID3DBlob* errorBlob = nullptr;
@@ -329,8 +331,8 @@ bool ExampleApp::InitShaders()
         }
     }
 
-    m_device->CreateVertexShader(vertexBlob->GetBufferPointer(), vertexBlob->GetBufferSize(), NULL, m_vertexShader2D.GetAddressOf());
-    m_device->CreatePixelShader(pixelBlob->GetBufferPointer(), pixelBlob->GetBufferSize(), NULL, m_pixelShader2D.GetAddressOf());
+    hr = m_device->CreateVertexShader(vertexBlob->GetBufferPointer(), vertexBlob->GetBufferSize(), NULL, m_vertexShader2D.GetAddressOf());
+    hr = m_device->CreatePixelShader(pixelBlob->GetBufferPointer(), pixelBlob->GetBufferSize(), NULL, m_pixelShader2D.GetAddressOf());
 
 
     if (FAILED(D3DCompileFromFile(L"VS3D.hlsl", 0, 0, "main", "vs_5_0", 0, 0, &vertexBlob, &errorBlob)))
@@ -347,8 +349,8 @@ bool ExampleApp::InitShaders()
         }
     }
 
-    m_device->CreateVertexShader(vertexBlob->GetBufferPointer(), vertexBlob->GetBufferSize(), NULL, m_vertexShader3D.GetAddressOf());
-    m_device->CreatePixelShader(pixelBlob->GetBufferPointer(), pixelBlob->GetBufferSize(), NULL, m_pixelShader3D.GetAddressOf());
+    hr = m_device->CreateVertexShader(vertexBlob->GetBufferPointer(), vertexBlob->GetBufferSize(), NULL, m_vertexShader3D.GetAddressOf());
+    hr = m_device->CreatePixelShader(pixelBlob->GetBufferPointer(), pixelBlob->GetBufferSize(), NULL, m_pixelShader3D.GetAddressOf());
 
     /////////////////////////////////
     // create input layout objects //
@@ -368,6 +370,8 @@ bool ExampleApp::InitShaders()
 
 void ExampleApp::Update()
 {
+    std::vector<glm::vec4> pixels(m_width * m_height, glm::vec4(m_initColor[0], m_initColor[1], m_initColor[2], m_initColor[3]));
+
     if (m_dimension == 2)
     {
         // update pixel constant buffer
@@ -375,8 +379,6 @@ void ExampleApp::Update()
 
         if (!m_textureOn)
         {
-            std::vector<glm::vec4> pixels(m_width * m_height, glm::vec4(m_initColor[0], m_initColor[1], m_initColor[2], m_initColor[3]));
-
             for (int i = 0; i < m_width; i++)
                 for (int j = 0; j < m_height; j++)
                 {
@@ -385,8 +387,8 @@ void ExampleApp::Update()
                     float positionScreenX = i - m_width / 2;
                     float positionScreenY = -(j - m_height / 2);
 
-                    if (m_circle->IsInside(glm::vec2(positionScreenX, positionScreenY)))
-                        pixels[i + m_width * j] = m_circle->color;
+                    if (m_raytracer->sphere->IsInside(glm::vec2(positionScreenX, positionScreenY)))
+                        pixels[i + m_width * j] = glm::vec4(m_raytracer->sphere->diffuse, 1.0);
                 }
 
             // update canvas 
@@ -398,7 +400,13 @@ void ExampleApp::Update()
     }
     else if (m_dimension == 3)
     {
-        //m_raytracer->Render(pixels);
+        m_raytracer->Render(pixels);
+
+        // update canvas 
+        D3D11_MAPPED_SUBRESOURCE ms;
+        m_context->Map(m_canvasTexture.Get(), NULL, D3D11_MAP_WRITE_DISCARD, NULL, &ms);
+        memcpy(ms.pData, pixels.data(), pixels.size() * sizeof(glm::vec4));
+        m_context->Unmap(m_canvasTexture.Get(), NULL);
 
         ////////////////////////
         // update view matrix //
@@ -445,9 +453,8 @@ void ExampleApp::Render()
         if (m_isLButtonPressed)
         {
             m_curMousePos = GetMousePos();
-            std::cout << "Mouse " << m_curMousePos.x << " " << m_curMousePos.y << std::endl;
 
-            if (m_circle->IsInside(m_curMousePos) && !m_isDragging)
+            if (m_raytracer->sphere->IsInside(m_curMousePos) && !m_isDragging)
             {
                 m_isDragging = true;
                 m_prevMousePos = m_curMousePos;
@@ -456,27 +463,37 @@ void ExampleApp::Render()
             {
                 glm::vec2 translation = m_curMousePos - m_prevMousePos;
 
-                cout << "Cur " << m_curMousePos.x << " " << m_curMousePos.y << endl;
-                cout << "Prev " << m_prevMousePos.x << " " << m_prevMousePos.y << endl;
-
-                m_circle->center += translation;
+                m_raytracer->sphere->center.x += translation.x;
+                m_raytracer->sphere->center.y += translation.y;
                 m_prevMousePos = m_curMousePos;
             }
         }
 
         m_context->PSSetConstantBuffers(0, 1, m_pixelConstantBuffer.GetAddressOf());
         m_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
         m_context->DrawIndexed(indexCount, 0, 0);
     }
     else if (m_dimension == 3)
     {
+        m_context->VSSetShader(m_vertexShader2D.Get(), 0, 0);
+        m_context->PSSetShader(m_pixelShader3D.Get(), 0, 0);
 
+        UINT stride = sizeof(Vertex);
+        UINT offset = 0;
+        m_context->IASetVertexBuffers(0, 1, m_vertexBuffer3D.GetAddressOf(), &stride, &offset);
+        m_context->IASetIndexBuffer(m_indexBuffer.Get(), DXGI_FORMAT_R16_UINT, 0);
+
+        m_context->PSSetSamplers(0, 1, m_samplerState.GetAddressOf());
+
+        std::vector<ID3D11ShaderResourceView*> nullSRV(m_imageSRVs.size(), nullptr);
+        m_context->PSSetShaderResources(0, nullSRV.size(), nullSRV.data());
+        m_context->PSSetShaderResources(0, 1, m_canvasSRV.GetAddressOf());
+
+        m_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+        m_context->DrawIndexed(indexCount, 0, 0);
     }
-    //m_context->VSSetShader(m_vertexShader.Get(), 0, 0);
-    //m_context->PSSetShader(m_pixelShader.Get(), 0, 0);
-    //m_context->IASetVertexBuffers(0, 1, m_vertexBuffer1.GetAddressOf(), &stride, &offset);
-    //m_context->PSSetShaderResources(0, 1, m_canvasSRV.GetAddressOf());
-    //m_context->DrawIndexed(indexCount, 0, 0);
 }
 
 void ExampleApp::UpdateGUI()
@@ -502,9 +519,9 @@ void ExampleApp::UpdateGUI()
         if (!m_textureOn)
         {
             ImGui::Text("Circle");
-            ImGui::SliderFloat2("Position", &m_circle->center.x, -m_height / 2, m_height / 2);
-            ImGui::SliderFloat("Radius", &m_circle->radius, 0.0f, 1000.0f);
-            ImGui::SliderFloat3("Color", &m_circle->color.r, 0.0f, 1.0f);
+            ImGui::SliderFloat2("Position", &m_raytracer->sphere->center.x, -m_height / 2, m_height / 2);
+            ImGui::SliderFloat("Radius", &m_raytracer->sphere->radius, 0.0f, 1000.0f);
+            ImGui::SliderFloat3("Color", &m_raytracer->sphere->diffuse.r, 0.0f, 1.0f);
             ImGui::SliderFloat3("Backround Color", m_initColor, 0.0f, 1.0f);
         }
     }
@@ -515,15 +532,14 @@ void ExampleApp::UpdateGUI()
         //ImGui::SliderFloat("Y", &example->m_raytracer->eyePos.y, -5.0f, 5.0f);
         //ImGui::SliderFloat("Z", &example->m_raytracer->eyePos.z, -5.0f, 5.0f);
 
-        //ImGui::Text("Sphere");
-        //ImGui::SliderFloat3("Sphere Position", &example->m_raytracer->sphere->center.x, -width / height, width / height);
-        //ImGui::SliderFloat("Radius", &example->m_raytracer->sphere->radius, 0.0f, 3.0f);
-        //ImGui::SliderFloat("Reflection", &example->m_raytracer->sphere->reflection, 0.0f, 1.0f);
-        //ImGui::SliderFloat3("Color", &example->m_raytracer->sphere->color.r, 0.0f, 1.0f);
-        //ImGui::SliderFloat3("Ambient", &example->m_raytracer->sphere->ambient.x, 0.0f, 1.0f);
-        //ImGui::SliderFloat3("Diffuse", &example->m_raytracer->sphere->diffuse.x, 0.0f, 1.0f);
-        //ImGui::SliderFloat3("Specular", &example->m_raytracer->sphere->specular.x, 0.0f, 1.0f);
-        //ImGui::Text("Light");
-        //ImGui::SliderFloat3("Light Position", &example->m_raytracer->light.pos.x, -2.0f, 2.0f);
+        ImGui::Text("Sphere");
+        ImGui::SliderFloat3("Sphere Position", &m_raytracer->sphere->center.x, -m_height / 2, m_height / 2);
+        ImGui::SliderFloat("Radius", &m_raytracer->sphere->radius, 0.0f, 1000.0f);
+        ImGui::SliderFloat("Reflection", &m_raytracer->sphere->reflection, 0.0f, 1.0f);
+        ImGui::SliderFloat3("Ambient", &m_raytracer->sphere->ambient.r, 0.0f, 1.0f);
+        ImGui::SliderFloat3("Diffuse", &m_raytracer->sphere->diffuse.r, 0.0f, 1.0f);
+        ImGui::SliderFloat3("Specular", &m_raytracer->sphere->specular.r, 0.0f, 1.0f);
+        ImGui::Text("Light");
+        ImGui::SliderFloat3("Light Position", &m_raytracer->light.pos.x, -500.0f, 500.0f);
     }   
 }

@@ -45,14 +45,12 @@ public:
     }
     void Clean();
 
-    glm::vec2 GetMousePos();
-    void SetMousePos(int posX, int posY);
 
 public:
     HWND m_hWnd;
 
     int m_width, m_height;
-    FLOAT m_initColor[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+    FLOAT m_initColor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
 
     //
     ComPtr<ID3D11Device> m_device;
@@ -62,7 +60,6 @@ public:
     ComPtr<ID3D11Texture2D> m_backBuffer;
     ComPtr<ID3D11RenderTargetView> m_baseRTV;
     D3D11_VIEWPORT m_viewport;
-    ComPtr<ID3D11SamplerState> m_samplerState;
 
     //
     std::vector<ComPtr<ID3D11ShaderResourceView>> m_imageSRVs;
@@ -80,11 +77,14 @@ public:
     ComPtr<ID3D11VertexShader> m_vertexShader3D;
     ComPtr<ID3D11PixelShader> m_pixelShader3D;
 
-    // 
+    // mouse
     int m_mousePosX;
     int m_mousePosY;
-    bool m_isLButtonPressed = false;
-
+    glm::vec2 GetMousePos();
+    void SetMousePos(int posX, int posY);
     bool m_isDragging = false;
+
+    // keyboard
+    bool m_isLButtonPressed = false;
 };
 

@@ -14,6 +14,6 @@ float4 main(PSInput input) : SV_Target
     
     if (color.a == 0.0)
         color = baseColorTexture.Sample(baseColorSampler, input.uv);
-    
+        
     return color;
 }

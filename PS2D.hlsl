@@ -22,6 +22,6 @@ float4 main(PSInput input) : SV_Target
     color = lerp(baseColorTexture0.Sample(baseColorSampler, input.uv),
                  baseColorTexture1.Sample(baseColorSampler, input.uv),
                  threshold);
-    
+        
     return color;
 }

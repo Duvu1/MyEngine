@@ -11,7 +11,7 @@ class Raytracer
 {
 public:
 	int width, height;
-	glm::vec3 eyePos = glm::vec3(0.0f, 0.0f, -1.5f);
+	glm::vec3 eyePos = glm::vec3(0.0f, 0.0f, -500.0f);
 	Light light;
 	std::shared_ptr<Sphere> sphere;
 	std::shared_ptr<Triangle> triangle;
@@ -24,48 +24,48 @@ public:
 		, height(height)
 	{
 		sphere = std::make_shared<Sphere>(
-			glm::vec3(0.0f, 0.0f, 0.5f),
-			0.5f,
+			glm::vec3(0.0f, 0.0f, 100.0f),
+			150.0f,
 			glm::vec3(0.0f, 1.0f, 1.0f)
 		);
 		sphere->ambient = glm::vec3(0.0f);
-		sphere->specular = glm::vec3(0.5f);
+		sphere->specular = glm::vec3(1.0f);
 		sphere->alpha = 10.0f;
-		sphere->reflection = 0.5;
+		sphere->reflection = 0.0f;
 
 		objects.push_back(sphere);
 
-		square = std::make_shared<Square>(
-			glm::vec3{ -1.0f, -1.0f, -1.0f }, 
-			glm::vec3{ -1.0f,  1.0f, -1.0f }, 
-			glm::vec3{ -1.0f,  1.0f, 10.0f }, 
-			glm::vec3{ -1.0f, -1.0f, 10.0f }, 
-			glm::vec4{  1.0f,  1.0f, 1.0f, 1.0f }
-		);
-		square->ambient = glm::vec3(0.0f);
-		square->diffuse = glm::vec3(0.0f, 0.1, 0.5f);
-		square->specular = glm::vec3(0.5f);
-		square->alpha = 10.0f;
-		square->reflection = 1.0f;
+		//square = std::make_shared<Square>(
+		//	glm::vec3{ -1.0f, -1.0f, -1.0f }, 
+		//	glm::vec3{ -1.0f,  1.0f, -1.0f }, 
+		//	glm::vec3{ -1.0f,  1.0f, 10.0f }, 
+		//	glm::vec3{ -1.0f, -1.0f, 10.0f }, 
+		//	glm::vec4{  1.0f,  1.0f, 1.0f, 1.0f }
+		//);
+		//square->ambient = glm::vec3(0.0f);
+		//square->diffuse = glm::vec3(0.0f, 0.1, 0.5f);
+		//square->specular = glm::vec3(0.5f);
+		//square->alpha = 10.0f;
+		//square->reflection = 0.0f;
+		//
+		//objects.push_back(square);
+		//
+		//square = std::make_shared<Square>(
+		//	glm::vec3{  1.0f, -1.0f, 10.0f },
+		//	glm::vec3{  1.0f,  1.0f, 10.0f },
+		//	glm::vec3{  1.0f,  1.0f, -1.0f },
+		//	glm::vec3{  1.0f, -1.0f, -1.0f },
+		//	glm::vec4{  1.0f,  1.0f, 1.0f, 1.0f }
+		//);
+		//square->ambient = glm::vec3(0.0f);
+		//square->diffuse = glm::vec3(0.1f);
+		//square->specular = glm::vec3(0.5f);
+		//square->alpha = 10.0f;
+		//square->reflection = 0.0f;
+		//
+		//objects.push_back(square);
 
-		objects.push_back(square);
-
-		square = std::make_shared<Square>(
-			glm::vec3{  1.0f, -1.0f, 10.0f },
-			glm::vec3{  1.0f,  1.0f, 10.0f },
-			glm::vec3{  1.0f,  1.0f, -1.0f },
-			glm::vec3{  1.0f, -1.0f, -1.0f },
-			glm::vec4{  1.0f,  1.0f, 1.0f, 1.0f }
-		);
-		square->ambient = glm::vec3(0.0f);
-		square->diffuse = glm::vec3(0.1f);
-		square->specular = glm::vec3(0.5f);
-		square->alpha = 10.0f;
-		square->reflection = 1.0f;
-
-		objects.push_back(square);
-
-		light = Light{ { 0.0f, 0.0f, -1.0f } }; // point lihgt
+		light = Light{ { 0.0f, 0.0f, -500.0f } }; // point light
 	}
 
 	glm::vec3 TransformScreenToWorld(glm::vec3 positionScreen)
@@ -153,7 +153,8 @@ public:
 		for (int i = 0; i < width; i++)
 			for (int j = 0; j < height; j++)
 			{
-				glm::vec3 pixelPosWorld = TransformScreenToWorld(glm::vec3(i, j, eyePos.z + 1.0f));
+				glm::vec3 pixelPosWorld = glm::vec3(i - width / 2, -(j - height / 2), -100.0f);
+				//glm::vec3 pixelPosWorld = TransformScreenToWorld(glm::vec3(i, j, eyePos.z + 1.0f));
 				//glm::vec3 rayDir = glm::vec3(0.0f, 0.0f, 1.0f);
 
 				MyRay pixelRay{ pixelPosWorld, glm::normalize(pixelPosWorld - eyePos) };
