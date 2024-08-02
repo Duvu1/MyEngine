@@ -17,8 +17,6 @@ Appbase::Appbase()
     , m_hWnd(NULL)
 {
     g_appBase = this;
-
-    Initialize();
 }
 
 Appbase::~Appbase()
@@ -109,6 +107,11 @@ bool Appbase::InitMainWindow()
 
 bool Appbase::InitApp()
 {
+    UINT createDeviceFlags = 0;
+#if defined(DEBUG) || defined(_DEBUG)
+    createDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
+#endif
+
     HRESULT hr = S_OK;
     
     //////////////////////
@@ -185,6 +188,74 @@ bool Appbase::InitApp()
     m_viewport.TopLeftY = 0;
 
     m_context->RSSetViewports(1, &m_viewport);
+
+    /////////////////////////////
+    // create rasterizer state // 
+    /////////////////////////////
+    D3D11_RASTERIZER_DESC rasterizerDesc;
+    ZeroMemory(&rasterizerDesc, sizeof(rasterizerDesc));
+    rasterizerDesc.FillMode = D3D11_FILL_SOLID;
+    rasterizerDesc.CullMode = D3D11_CULL_NONE;
+    rasterizerDesc.FrontCounterClockwise = false; // 삼각형 앞면의 정점이 시계 반대 방향으로 배치되어 있는지
+    rasterizerDesc.DepthClipEnable = true; // nearZ, farZ 확인용
+
+    hr = m_device->CreateRasterizerState(&rasterizerDesc, m_rasterizerState.GetAddressOf());
+
+    if (FAILED(hr))
+    {
+        cout << "Failed: CreateRasterizerState()" << endl;
+        return false;
+    }
+
+    /////////////////////////
+    // create depth buffer // depth 값을 저장하는 버퍼
+    /////////////////////////
+    D3D11_TEXTURE2D_DESC depthStencilBufferDesc; // buffer desc가 아니느 texture2d desc 사용
+    ZeroMemory(&depthStencilBufferDesc, sizeof(depthStencilBufferDesc));
+    depthStencilBufferDesc.Width = m_width;
+    depthStencilBufferDesc.Height = m_height;
+    depthStencilBufferDesc.MipLevels = 1;
+    depthStencilBufferDesc.ArraySize = 1;
+    depthStencilBufferDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT; // depth 24bits, stencil 8bits
+    depthStencilBufferDesc.SampleDesc.Count = 1;
+    depthStencilBufferDesc.SampleDesc.Quality = 0;
+    depthStencilBufferDesc.Usage = D3D11_USAGE_DEFAULT;
+    depthStencilBufferDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+    depthStencilBufferDesc.CPUAccessFlags = 0;
+    depthStencilBufferDesc.MiscFlags = 0;
+
+    hr = m_device->CreateTexture2D(&depthStencilBufferDesc, 0, m_depthStencilBuffer.GetAddressOf());
+    
+    if (FAILED(hr))
+    {
+        cout << "Failed: CreateTexture2D() while creating depth stencil buffer" << endl;
+        return false;
+    }
+
+    hr = m_device->CreateDepthStencilView(m_depthStencilBuffer.Get(), 0, m_depthStencilView.GetAddressOf());
+    
+    if (FAILED(hr))
+    {
+        cout << "Failed: CreateDepthStencilView()" << endl;
+        return false;
+    }
+
+    ////////////////////////////////
+    // create depth stencil state //
+    ////////////////////////////////
+
+    D3D11_DEPTH_STENCIL_DESC depthStencilDesc;
+    ZeroMemory(&depthStencilDesc, sizeof(depthStencilDesc));
+    depthStencilDesc.DepthEnable = true;
+    depthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+    depthStencilDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
+
+    hr = m_device->CreateDepthStencilState(&depthStencilDesc, m_depthStencilState.GetAddressOf());
+    if (FAILED(hr))
+    {
+        cout << "Failed: CreateDepthStencilState()" << endl;
+        return false;
+    }
 
     return true;
 }

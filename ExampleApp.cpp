@@ -1,9 +1,125 @@
 #include "ExampleApp.h"
 
+#include <tuple>
+
 using namespace std;
+
+void MakeBox(vector<Vertex3D> &vertices, vector<uint16_t> &indices)
+{
+    vector<Vector3> positions;
+    vector<Vector3> colors;
+    vector<Vector3> normals;
+
+    const float scale = 1.0f;
+
+    // À­¸é
+    positions.push_back(Vector3(-1.0f, 1.0f, -1.0f) * scale);
+    positions.push_back(Vector3(-1.0f, 1.0f, 1.0f) * scale);
+    positions.push_back(Vector3(1.0f, 1.0f, 1.0f) * scale);
+    positions.push_back(Vector3(1.0f, 1.0f, -1.0f) * scale);
+    colors.push_back(Vector3(1.0f, 0.0f, 0.0f));
+    colors.push_back(Vector3(1.0f, 0.0f, 0.0f));
+    colors.push_back(Vector3(1.0f, 0.0f, 0.0f));
+    colors.push_back(Vector3(1.0f, 0.0f, 0.0f));
+    normals.push_back(Vector3(0.0f, 1.0f, 0.0f));
+    normals.push_back(Vector3(0.0f, 1.0f, 0.0f));
+    normals.push_back(Vector3(0.0f, 1.0f, 0.0f));
+    normals.push_back(Vector3(0.0f, 1.0f, 0.0f));
+
+    // ¾Æ·§¸é
+    positions.push_back(Vector3(-1.0f, -1.0f, -1.0f) * scale);
+    positions.push_back(Vector3(1.0f, -1.0f, -1.0f) * scale);
+    positions.push_back(Vector3(1.0f, -1.0f, 1.0f) * scale);
+    positions.push_back(Vector3(-1.0f, -1.0f, 1.0f) * scale);
+    colors.push_back(Vector3(0.0f, 1.0f, 0.0f));
+    colors.push_back(Vector3(0.0f, 1.0f, 0.0f));
+    colors.push_back(Vector3(0.0f, 1.0f, 0.0f));
+    colors.push_back(Vector3(0.0f, 1.0f, 0.0f));
+    normals.push_back(Vector3(0.0f, -1.0f, 0.0f));
+    normals.push_back(Vector3(0.0f, -1.0f, 0.0f));
+    normals.push_back(Vector3(0.0f, -1.0f, 0.0f));
+    normals.push_back(Vector3(0.0f, -1.0f, 0.0f));
+
+    // ¾Õ¸é
+    positions.push_back(Vector3(-1.0f, -1.0f, -1.0f) * scale);
+    positions.push_back(Vector3(-1.0f, 1.0f, -1.0f) * scale);
+    positions.push_back(Vector3(1.0f, 1.0f, -1.0f) * scale);
+    positions.push_back(Vector3(1.0f, -1.0f, -1.0f) * scale);
+    colors.push_back(Vector3(0.0f, 0.0f, 1.0f));
+    colors.push_back(Vector3(0.0f, 0.0f, 1.0f));
+    colors.push_back(Vector3(0.0f, 0.0f, 1.0f));
+    colors.push_back(Vector3(0.0f, 0.0f, 1.0f));
+    normals.push_back(Vector3(0.0f, 0.0f, -1.0f));
+    normals.push_back(Vector3(0.0f, 0.0f, -1.0f));
+    normals.push_back(Vector3(0.0f, 0.0f, -1.0f));
+    normals.push_back(Vector3(0.0f, 0.0f, -1.0f));
+
+    // µÞ¸é
+    positions.push_back(Vector3(-1.0f, -1.0f, 1.0f) * scale);
+    positions.push_back(Vector3(1.0f, -1.0f, 1.0f) * scale);
+    positions.push_back(Vector3(1.0f, 1.0f, 1.0f) * scale);
+    positions.push_back(Vector3(-1.0f, 1.0f, 1.0f) * scale);
+    colors.push_back(Vector3(0.0f, 1.0f, 1.0f));
+    colors.push_back(Vector3(0.0f, 1.0f, 1.0f));
+    colors.push_back(Vector3(0.0f, 1.0f, 1.0f));
+    colors.push_back(Vector3(0.0f, 1.0f, 1.0f));
+    normals.push_back(Vector3(0.0f, 0.0f, 1.0f));
+    normals.push_back(Vector3(0.0f, 0.0f, 1.0f));
+    normals.push_back(Vector3(0.0f, 0.0f, 1.0f));
+    normals.push_back(Vector3(0.0f, 0.0f, 1.0f));
+
+    // ¿ÞÂÊ
+    positions.push_back(Vector3(-1.0f, -1.0f, 1.0f) * scale);
+    positions.push_back(Vector3(-1.0f, 1.0f, 1.0f) * scale);
+    positions.push_back(Vector3(-1.0f, 1.0f, -1.0f) * scale);
+    positions.push_back(Vector3(-1.0f, -1.0f, -1.0f) * scale);
+    colors.push_back(Vector3(1.0f, 1.0f, 0.0f));
+    colors.push_back(Vector3(1.0f, 1.0f, 0.0f));
+    colors.push_back(Vector3(1.0f, 1.0f, 0.0f));
+    colors.push_back(Vector3(1.0f, 1.0f, 0.0f));
+    normals.push_back(Vector3(-1.0f, 0.0f, 0.0f));
+    normals.push_back(Vector3(-1.0f, 0.0f, 0.0f));
+    normals.push_back(Vector3(-1.0f, 0.0f, 0.0f));
+    normals.push_back(Vector3(-1.0f, 0.0f, 0.0f));
+
+    // ¿À¸¥ÂÊ
+    positions.push_back(Vector3(1.0f, -1.0f, 1.0f) * scale);
+    positions.push_back(Vector3(1.0f, -1.0f, -1.0f) * scale);
+    positions.push_back(Vector3(1.0f, 1.0f, -1.0f) * scale);
+    positions.push_back(Vector3(1.0f, 1.0f, 1.0f) * scale);
+    colors.push_back(Vector3(1.0f, 0.0f, 1.0f));
+    colors.push_back(Vector3(1.0f, 0.0f, 1.0f));
+    colors.push_back(Vector3(1.0f, 0.0f, 1.0f));
+    colors.push_back(Vector3(1.0f, 0.0f, 1.0f));
+    normals.push_back(Vector3(1.0f, 0.0f, 0.0f));
+    normals.push_back(Vector3(1.0f, 0.0f, 0.0f));
+    normals.push_back(Vector3(1.0f, 0.0f, 0.0f));
+    normals.push_back(Vector3(1.0f, 0.0f, 0.0f));
+
+    for (size_t i = 0; i < positions.size(); i++)
+    {
+        Vertex3D vertex;
+        vertex.position = positions[i];
+        vertex.color = colors[i];
+        vertices.push_back(vertex);
+    }
+
+    vector<uint16_t> index = {
+        0,  1,  2,  0,  2,  3,  // À­¸é
+        4,  5,  6,  4,  6,  7,  // ¾Æ·§¸é
+        8,  9,  10, 8,  10, 11, // ¾Õ¸é
+        12, 13, 14, 12, 14, 15, // µÞ¸é
+        16, 17, 18, 16, 18, 19, // ¿ÞÂÊ
+        20, 21, 22, 20, 22, 23  // ¿À¸¥ÂÊ
+    };
+
+    for (size_t i = 0; i < index.size(); i++)
+        indices.push_back(index[i]);
+}
 
 ExampleApp::ExampleApp()
     : Appbase()
+    , m_indexCount2D(0)
 {
     Image image;
 
@@ -13,8 +129,10 @@ ExampleApp::ExampleApp()
     image.ReadFromFile("image1.jpg");
     m_images.push_back(image);
 
+    m_model = std::make_unique<Model>();
+    MakeBox(m_model->vertices, m_model->indices);
     //m_circle = std::make_unique<Circle>(Circle({ 0.0f, 0.0f }, 150.0f, { 0.0f, 1.0f, 1.0f, 1.0f }));
-    m_raytracer = std::make_unique<Raytracer>(m_width, m_height);
+    //m_raytracer = std::make_unique<Raytracer>(m_width, m_height);
 }
 
 ExampleApp::~ExampleApp()
@@ -23,6 +141,12 @@ ExampleApp::~ExampleApp()
 
 bool ExampleApp::Initialize()
 {
+    if (!Appbase::Initialize())
+    {
+        cout << "Failed: Initialize()" << endl;
+        return false;
+    }
+
     HRESULT hr = S_OK;
 
     //////////////////////////
@@ -152,11 +276,17 @@ bool ExampleApp::Initialize()
         m_context->Unmap(m_imageTextures[i].Get(), NULL);
     }
 
-    //////////////////////////
-    // create vertex buffer //
-    //////////////////////////
+    ////////////////////////
+    // initialize shaders //
+    ////////////////////////
+    InitShaders();
+
+    //////////////////////
+    // create 2D object //
+    //////////////////////
+    // vertices
     {
-        const std::vector<Vertex> vertices =
+        const std::vector<Vertex2D> vertices =
         {
             { { -1.0f, -1.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f } },
             { { -1.0f,  1.0f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f }, { 0.0f, 0.0f } },
@@ -166,11 +296,11 @@ bool ExampleApp::Initialize()
 
         D3D11_BUFFER_DESC bufferDesc;
         bufferDesc.Usage = D3D11_USAGE_DYNAMIC;                // write access access by CPU and GPU
-        bufferDesc.ByteWidth = UINT(sizeof(Vertex) * vertices.size());             // size is the VERTEX struct * 3
+        bufferDesc.ByteWidth = UINT(sizeof(Vertex2D) * vertices.size());             // size is the VERTEX struct * 3
         bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;       // use as a vertex buffer
         bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;    // allow CPU to write in buffer
         bufferDesc.MiscFlags = 0;
-        bufferDesc.StructureByteStride = sizeof(Vertex);
+        bufferDesc.StructureByteStride = sizeof(Vertex2D);
 
         D3D11_SUBRESOURCE_DATA vertexBufferData = { 0, };
         vertexBufferData.pSysMem = vertices.data();
@@ -184,45 +314,8 @@ bool ExampleApp::Initialize()
             return false;
         }
     }
-    
-    ////////////////////////
-    // initialize shaders //
-    ////////////////////////
-    InitShaders();
 
-    {
-        const std::vector<Vertex> vertices =
-        {
-            { { -1.0f, -1.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f } },
-            { { -1.0f,  1.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f } },
-            { {  1.0f,  1.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f, 0.0f }, { 1.0f, 0.0f } },
-            { {  1.0f, -1.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f } },
-        };
-
-        D3D11_BUFFER_DESC bufferDesc;
-        bufferDesc.Usage = D3D11_USAGE_DYNAMIC;                // write access access by CPU and GPU
-        bufferDesc.ByteWidth = UINT(sizeof(Vertex) * vertices.size());             // size is the VERTEX struct * 3
-        bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;       // use as a vertex buffer
-        bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;    // allow CPU to write in buffer
-        bufferDesc.MiscFlags = 0;
-        bufferDesc.StructureByteStride = sizeof(Vertex);
-
-        D3D11_SUBRESOURCE_DATA vertexBufferData = { 0, };
-        vertexBufferData.pSysMem = vertices.data();
-        vertexBufferData.SysMemPitch = 0;
-        vertexBufferData.SysMemSlicePitch = 0;
-
-        const HRESULT hr = m_device->CreateBuffer(&bufferDesc, &vertexBufferData, m_vertexBuffer3D.GetAddressOf());
-
-        if (FAILED(hr)) {
-            std::cout << "Failed: CreateBuffer()_Vertex1" << std::endl;
-            return false;
-        };
-    }
-
-    /////////////////////////
-    // create index buffer //
-    /////////////////////////
+    // indices
     {
         const std::vector<uint16_t> indices =
         {
@@ -230,7 +323,7 @@ bool ExampleApp::Initialize()
             0, 2, 3,
         };
 
-        indexCount = (UINT)indices.size();
+        m_indexCount2D = indices.size();
 
         D3D11_BUFFER_DESC bufferDesc;
         ZeroMemory(&bufferDesc, sizeof(bufferDesc));
@@ -246,13 +339,66 @@ bool ExampleApp::Initialize()
         indexBufferData.SysMemPitch = 0;
         indexBufferData.SysMemSlicePitch = 0;
 
-        const HRESULT hr = m_device->CreateBuffer(&bufferDesc, &indexBufferData, m_indexBuffer.GetAddressOf());
+        const HRESULT hr = m_device->CreateBuffer(&bufferDesc, &indexBufferData, m_indexBuffer2D.GetAddressOf());
 
         if (FAILED(hr)) {
             std::cout << "Failed: CreateBuffer()_Index" << std::endl;
             return false;
         };
     }
+
+    //////////////////////
+    // create 3D object //
+    //////////////////////
+    // vertices
+    {
+        D3D11_BUFFER_DESC bufferDesc;
+        bufferDesc.Usage = D3D11_USAGE_DYNAMIC;                // write access access by CPU and GPU
+        bufferDesc.ByteWidth = UINT(sizeof(Vertex3D) * m_model->vertices.size());             // size is the VERTEX struct * 3
+        bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;       // use as a vertex buffer
+        bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;    // allow CPU to write in buffer
+        bufferDesc.MiscFlags = 0;
+        bufferDesc.StructureByteStride = sizeof(Vertex3D);
+
+        D3D11_SUBRESOURCE_DATA vertexBufferData = { 0, };
+        vertexBufferData.pSysMem = m_model->vertices.data();
+        vertexBufferData.SysMemPitch = 0;
+        vertexBufferData.SysMemSlicePitch = 0;
+
+        const HRESULT hr = m_device->CreateBuffer(&bufferDesc, &vertexBufferData, m_vertexBuffer3D.GetAddressOf());
+
+        if (FAILED(hr)) {
+            std::cout << "Failed: CreateBuffer()_Vertex1" << std::endl;
+            return false;
+        };
+    }
+
+    // indices
+    {
+        m_indexCount3D = m_model->indices.size();
+
+        D3D11_BUFFER_DESC bufferDesc;
+        ZeroMemory(&bufferDesc, sizeof(bufferDesc));
+        bufferDesc.Usage = D3D11_USAGE_DYNAMIC;                // write access access by CPU and GPU
+        bufferDesc.ByteWidth = UINT(sizeof(uint16_t) * m_model->indices.size());
+        bufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;        // use as a index buffer
+        bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;    // allow CPU to write in buffer
+        bufferDesc.MiscFlags = 0;
+        bufferDesc.StructureByteStride = sizeof(uint16_t);
+
+        D3D11_SUBRESOURCE_DATA indexBufferData = { 0, };
+        indexBufferData.pSysMem = m_model->indices.data();
+        indexBufferData.SysMemPitch = 0;
+        indexBufferData.SysMemSlicePitch = 0;
+
+        const HRESULT hr = m_device->CreateBuffer(&bufferDesc, &indexBufferData, m_indexBuffer3D.GetAddressOf());
+
+        if (FAILED(hr)) {
+            std::cout << "Failed: CreateBuffer()_Index" << std::endl;
+            return false;
+        };
+    }
+    
 
     ///////////////////////////////////
     // create vertex constant buffer //
@@ -317,6 +463,7 @@ bool ExampleApp::InitShaders()
     ID3DBlob* pixelBlob = nullptr;
     ID3DBlob* errorBlob = nullptr;
 
+    // 2D
     if (FAILED(D3DCompileFromFile(L"VS2D.hlsl", 0, 0, "main", "vs_5_0", 0, 0, &vertexBlob, &errorBlob)))
     {
         if (errorBlob) {
@@ -334,7 +481,16 @@ bool ExampleApp::InitShaders()
     hr = m_device->CreateVertexShader(vertexBlob->GetBufferPointer(), vertexBlob->GetBufferSize(), NULL, m_vertexShader2D.GetAddressOf());
     hr = m_device->CreatePixelShader(pixelBlob->GetBufferPointer(), pixelBlob->GetBufferSize(), NULL, m_pixelShader2D.GetAddressOf());
 
+    D3D11_INPUT_ELEMENT_DESC inputLayout2D[] =
+    {
+        {"POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+        {"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 16, D3D11_INPUT_PER_VERTEX_DATA, 0},
+        {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 32, D3D11_INPUT_PER_VERTEX_DATA, 0},
+    };
 
+    m_device->CreateInputLayout(inputLayout2D, 3, vertexBlob->GetBufferPointer(), vertexBlob->GetBufferSize(), m_inputLayout2D.GetAddressOf());
+
+    // 3D
     if (FAILED(D3DCompileFromFile(L"VS3D.hlsl", 0, 0, "main", "vs_5_0", 0, 0, &vertexBlob, &errorBlob)))
     {
         if (errorBlob) {
@@ -352,45 +508,41 @@ bool ExampleApp::InitShaders()
     hr = m_device->CreateVertexShader(vertexBlob->GetBufferPointer(), vertexBlob->GetBufferSize(), NULL, m_vertexShader3D.GetAddressOf());
     hr = m_device->CreatePixelShader(pixelBlob->GetBufferPointer(), pixelBlob->GetBufferSize(), NULL, m_pixelShader3D.GetAddressOf());
 
-    /////////////////////////////////
-    // create input layout objects //
-    /////////////////////////////////
-    D3D11_INPUT_ELEMENT_DESC inputLayout[] =
+    D3D11_INPUT_ELEMENT_DESC inputLayout3D[] =
     {
-        {"POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
-        {"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 16, D3D11_INPUT_PER_VERTEX_DATA, 0},
-        {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 32, D3D11_INPUT_PER_VERTEX_DATA, 0},
+        {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+        {"COLOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0},
     };
 
-    m_device->CreateInputLayout(inputLayout, 3, vertexBlob->GetBufferPointer(), vertexBlob->GetBufferSize(), m_inputLayout.GetAddressOf());
-    m_context->IASetInputLayout(m_inputLayout.Get());
+    m_device->CreateInputLayout(inputLayout3D, 2, vertexBlob->GetBufferPointer(), vertexBlob->GetBufferSize(), m_inputLayout3D.GetAddressOf());
 
     return true;
 }
 
 void ExampleApp::Update()
 {
-    std::vector<glm::vec4> pixels(m_width * m_height, glm::vec4(m_initColor[0], m_initColor[1], m_initColor[2], m_initColor[3]));
 
     if (m_dimension == 2)
     {
+        std::vector<glm::vec4> pixels(m_width * m_height, glm::vec4(m_initColor[0], m_initColor[1], m_initColor[2], m_initColor[3]));
+
         // update pixel constant buffer
         UpdateBuffer(m_pixelConstantBuffer, m_pixelConstantBufferData);
 
         if (!m_textureOn)
         {
-            for (int i = 0; i < m_width; i++)
-                for (int j = 0; j < m_height; j++)
-                {
-                    //float positionScreenX = (float)(i - m_width / 2) / (m_height / 2);
-                    //float positionScreenY = -(float)(j - m_height / 2) / (m_height / 2);
-                    float positionScreenX = i - m_width / 2;
-                    float positionScreenY = -(j - m_height / 2);
-
-                    if (m_raytracer->sphere->IsInside(glm::vec2(positionScreenX, positionScreenY)))
-                        pixels[i + m_width * j] = glm::vec4(m_raytracer->sphere->diffuse, 1.0);
-                }
-
+            //for (int i = 0; i < m_width; i++)
+            //    for (int j = 0; j < m_height; j++)
+            //    {
+            //        //float positionScreenX = (float)(i - m_width / 2) / (m_height / 2);
+            //        //float positionScreenY = -(float)(j - m_height / 2) / (m_height / 2);
+            //        float positionScreenX = i - m_width / 2;
+            //        float positionScreenY = -(j - m_height / 2);
+            //
+            //        if (m_raytracer->sphere->IsInside(glm::vec2(positionScreenX, positionScreenY)))
+            //            pixels[i + m_width * j] = glm::vec4(m_raytracer->sphere->diffuse, 1.0);
+            //    }
+        
             // update canvas 
             D3D11_MAPPED_SUBRESOURCE ms;
             m_context->Map(m_canvasTexture.Get(), NULL, D3D11_MAP_WRITE_DISCARD, NULL, &ms);
@@ -400,41 +552,59 @@ void ExampleApp::Update()
     }
     else if (m_dimension == 3)
     {
-        m_raytracer->Render(pixels);
-
-        // update canvas 
-        D3D11_MAPPED_SUBRESOURCE ms;
-        m_context->Map(m_canvasTexture.Get(), NULL, D3D11_MAP_WRITE_DISCARD, NULL, &ms);
-        memcpy(ms.pData, pixels.data(), pixels.size() * sizeof(glm::vec4));
-        m_context->Unmap(m_canvasTexture.Get(), NULL);
+        //m_raytracer->Render(pixels);
+        
+        // update vertex constant buffer
+        /////////////////////////
+        // update model matrix //
+        /////////////////////////
+        m_vertexConstantBufferData.model = Matrix::CreateTranslation(m_modelTranslation);
+        m_vertexConstantBufferData.model = m_vertexConstantBufferData.model.Transpose();
 
         ////////////////////////
         // update view matrix //
         ////////////////////////
-        //m_vertexConstantBufferData.view = XMMatrixLookToLH(m_viewPos, m_viewDir, m_viewUp);
-        //m_vertexConstantBufferData.view = m_vertexConstantBufferData.view.Transpose();
-        //
-        //m_context->Map(m_vertexConstantBuffer.Get(), NULL, D3D11_MAP_WRITE_DISCARD, NULL, &ms);
-        //memcpy(ms.pData, &m_vertexConstantBufferData, sizeof(VSConstantBufferData));
-        //m_context->Unmap(m_vertexConstantBuffer.Get(), NULL);
+        m_vertexConstantBufferData.view = XMMatrixLookToLH(m_viewPos, m_viewDir, m_viewUp);
+        m_vertexConstantBufferData.view = m_vertexConstantBufferData.view.Transpose();
+
+        //////////////////////////////
+        // update projection matrix //
+        //////////////////////////////
+        
+        m_vertexConstantBufferData.projection = XMMatrixPerspectiveFovLH(
+            XMConvertToRadians(m_fieldOfViewAngle), m_aspectRatio, m_nearZ, m_farZ);
+        m_vertexConstantBufferData.projection = m_vertexConstantBufferData.projection.Transpose();
+
+        UpdateBuffer(m_vertexConstantBuffer, m_vertexConstantBufferData);
+
+        // update canvas  
+        //D3D11_MAPPED_SUBRESOURCE ms;
+        //m_context->Map(m_canvasTexture.Get(), NULL, D3D11_MAP_WRITE_DISCARD, NULL, &ms);
+        //memcpy(ms.pData, pixels.data(), pixels.size() * sizeof(glm::vec4));
+        //m_context->Unmap(m_canvasTexture.Get(), NULL);
     }
 }
 
 void ExampleApp::Render()
 {
     m_context->RSSetViewports(1, &m_viewport);
-    m_context->OMSetRenderTargets(1, m_baseRTV.GetAddressOf(), nullptr);
+    m_context->OMSetRenderTargets(1, m_baseRTV.GetAddressOf(), m_depthStencilView.Get());
     m_context->ClearRenderTargetView(m_baseRTV.Get(), m_initColor);
+    m_context->ClearDepthStencilView(m_depthStencilView.Get(),
+        D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+    m_context->OMSetDepthStencilState(m_depthStencilState.Get(), 0);
+    m_context->RSSetState(m_rasterizerState.Get());
 
     if (m_dimension == 2)
     {
+        m_context->IASetInputLayout(m_inputLayout2D.Get());
         m_context->VSSetShader(m_vertexShader2D.Get(), 0, 0);
         m_context->PSSetShader(m_pixelShader2D.Get(), 0, 0);
 
-        UINT stride = sizeof(Vertex);
+        UINT stride = sizeof(Vertex2D);
         UINT offset = 0;
         m_context->IASetVertexBuffers(0, 1, m_vertexBuffer2D.GetAddressOf(), &stride, &offset);
-        m_context->IASetIndexBuffer(m_indexBuffer.Get(), DXGI_FORMAT_R16_UINT, 0);
+        m_context->IASetIndexBuffer(m_indexBuffer2D.Get(), DXGI_FORMAT_R16_UINT, 0);
 
         m_context->PSSetSamplers(0, 1, m_samplerState.GetAddressOf());
 
@@ -450,39 +620,40 @@ void ExampleApp::Render()
             m_context->PSSetShaderResources(0, 1, m_canvasSRV.GetAddressOf());
         }
 
-        if (m_isLButtonPressed)
-        {
-            m_curMousePos = GetMousePos();
-
-            if (m_raytracer->sphere->IsInside(m_curMousePos) && !m_isDragging)
-            {
-                m_isDragging = true;
-                m_prevMousePos = m_curMousePos;
-            }
-            else if (m_isDragging)
-            {
-                glm::vec2 translation = m_curMousePos - m_prevMousePos;
-
-                m_raytracer->sphere->center.x += translation.x;
-                m_raytracer->sphere->center.y += translation.y;
-                m_prevMousePos = m_curMousePos;
-            }
-        }
+        //if (m_isLButtonPressed)
+        //{
+        //    m_curMousePos = GetMousePos();
+        //
+        //    if (m_raytracer->sphere->IsInside(m_curMousePos) && !m_isDragging)
+        //    {
+        //        m_isDragging = true;
+        //        m_prevMousePos = m_curMousePos;
+        //    }
+        //    else if (m_isDragging)
+        //    {
+        //        glm::vec2 translation = m_curMousePos - m_prevMousePos;
+        //
+        //        m_raytracer->sphere->center.x += translation.x;
+        //        m_raytracer->sphere->center.y += translation.y;
+        //        m_prevMousePos = m_curMousePos;
+        //    }
+        //}
 
         m_context->PSSetConstantBuffers(0, 1, m_pixelConstantBuffer.GetAddressOf());
         m_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-        m_context->DrawIndexed(indexCount, 0, 0);
+        m_context->DrawIndexed(m_indexCount2D, 0, 0);
     }
     else if (m_dimension == 3)
     {
-        m_context->VSSetShader(m_vertexShader2D.Get(), 0, 0);
+        m_context->IASetInputLayout(m_inputLayout3D.Get());
+        m_context->VSSetShader(m_vertexShader3D.Get(), 0, 0);
         m_context->PSSetShader(m_pixelShader3D.Get(), 0, 0);
 
-        UINT stride = sizeof(Vertex);
+        UINT stride = sizeof(Vertex3D);
         UINT offset = 0;
         m_context->IASetVertexBuffers(0, 1, m_vertexBuffer3D.GetAddressOf(), &stride, &offset);
-        m_context->IASetIndexBuffer(m_indexBuffer.Get(), DXGI_FORMAT_R16_UINT, 0);
+        m_context->IASetIndexBuffer(m_indexBuffer3D.Get(), DXGI_FORMAT_R16_UINT, 0);
 
         m_context->PSSetSamplers(0, 1, m_samplerState.GetAddressOf());
 
@@ -490,9 +661,10 @@ void ExampleApp::Render()
         m_context->PSSetShaderResources(0, nullSRV.size(), nullSRV.data());
         m_context->PSSetShaderResources(0, 1, m_canvasSRV.GetAddressOf());
 
+        m_context->VSSetConstantBuffers(0, 1, m_vertexConstantBuffer.GetAddressOf());
         m_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-        m_context->DrawIndexed(indexCount, 0, 0);
+        m_context->DrawIndexed(m_indexCount3D, 0, 0);
     }
 }
 
@@ -518,28 +690,37 @@ void ExampleApp::UpdateGUI()
 
         if (!m_textureOn)
         {
-            ImGui::Text("Circle");
-            ImGui::SliderFloat2("Position", &m_raytracer->sphere->center.x, -m_height / 2, m_height / 2);
-            ImGui::SliderFloat("Radius", &m_raytracer->sphere->radius, 0.0f, 1000.0f);
-            ImGui::SliderFloat3("Color", &m_raytracer->sphere->diffuse.r, 0.0f, 1.0f);
-            ImGui::SliderFloat3("Backround Color", m_initColor, 0.0f, 1.0f);
+            //ImGui::Text("Circle");
+            //ImGui::SliderFloat2("Position", &m_raytracer->sphere->center.x, -m_height / 2, m_height / 2);
+            //ImGui::SliderFloat("Radius", &m_raytracer->sphere->radius, 0.0f, 1000.0f);
+            //ImGui::SliderFloat3("Color", &m_raytracer->sphere->diffuse.r, 0.0f, 1.0f);
+            //ImGui::SliderFloat3("Backround Color", m_initColor, 0.0f, 1.0f);
         }
     }
     else if (m_dimension == 3)
     {
+        ImGui::Text("Box");
+        ImGui::SliderFloat3("Model Position", &m_modelTranslation.x, -2.0f, 2.0f);
+        ImGui::SliderFloat3("View Position", &m_viewPos.x, -2.0f, 2.0f);
+        ImGui::SliderFloat3("View Direction", &m_viewDir.x, -2.0f, 2.0f);
+        ImGui::SliderFloat("Field Of View", &m_fieldOfViewAngle, 50.0f, 150.0f);
+        ImGui::SliderFloat("Near Z", &m_nearZ, 0.01f, 10.0f);
+        ImGui::SliderFloat("Far Z", &m_farZ, m_nearZ + 0.01f, 10.0f);
+        ImGui::SliderFloat("Aspect Ratio", &m_aspectRatio, 0.1f, 3.0f);
+
         //ImGui::Text("My Position");
         //ImGui::SliderFloat("X", &example->m_raytracer->eyePos.x, -5.0f, 5.0f);
         //ImGui::SliderFloat("Y", &example->m_raytracer->eyePos.y, -5.0f, 5.0f);
         //ImGui::SliderFloat("Z", &example->m_raytracer->eyePos.z, -5.0f, 5.0f);
 
-        ImGui::Text("Sphere");
-        ImGui::SliderFloat3("Sphere Position", &m_raytracer->sphere->center.x, -m_height / 2, m_height / 2);
-        ImGui::SliderFloat("Radius", &m_raytracer->sphere->radius, 0.0f, 1000.0f);
-        ImGui::SliderFloat("Reflection", &m_raytracer->sphere->reflection, 0.0f, 1.0f);
-        ImGui::SliderFloat3("Ambient", &m_raytracer->sphere->ambient.r, 0.0f, 1.0f);
-        ImGui::SliderFloat3("Diffuse", &m_raytracer->sphere->diffuse.r, 0.0f, 1.0f);
-        ImGui::SliderFloat3("Specular", &m_raytracer->sphere->specular.r, 0.0f, 1.0f);
-        ImGui::Text("Light");
-        ImGui::SliderFloat3("Light Position", &m_raytracer->light.pos.x, -500.0f, 500.0f);
+        //ImGui::Text("Sphere");
+        //ImGui::SliderFloat3("Sphere Position", &m_raytracer->sphere->center.x, -m_height / 2, m_height / 2);
+        //ImGui::SliderFloat("Radius", &m_raytracer->sphere->radius, 0.0f, 1000.0f);
+        //ImGui::SliderFloat("Reflection", &m_raytracer->sphere->reflection, 0.0f, 1.0f);
+        //ImGui::SliderFloat3("Ambient", &m_raytracer->sphere->ambient.r, 0.0f, 1.0f);
+        //ImGui::SliderFloat3("Diffuse", &m_raytracer->sphere->diffuse.r, 0.0f, 1.0f);
+        //ImGui::SliderFloat3("Specular", &m_raytracer->sphere->specular.r, 0.0f, 1.0f);
+        //ImGui::Text("Light");
+        //ImGui::SliderFloat3("Light Position", &m_raytracer->light.pos.x, -500.0f, 500.0f);
     }   
 }

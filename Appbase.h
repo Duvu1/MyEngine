@@ -9,11 +9,17 @@
 
 #include "MyEngine.h"
 
-struct Vertex
+struct Vertex2D
 {
     glm::vec4 pos;
     glm::vec4 color;
     glm::vec2 uv;
+};
+
+struct Vertex3D
+{
+    Vector3 position;
+    Vector3 color;
 };
 
 class Appbase
@@ -43,8 +49,9 @@ public:
         memcpy(ms.pData, &bufferData, sizeof(bufferData));
         m_context->Unmap(buffer.Get(), NULL);
     }
-    void Clean();
 
+    float GetAspectRatio() { return (float)m_width / m_height; };
+    void Clean();
 
 public:
     HWND m_hWnd;
@@ -52,7 +59,7 @@ public:
     int m_width, m_height;
     FLOAT m_initColor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
 
-    //
+    // init
     ComPtr<ID3D11Device> m_device;
     ComPtr<ID3D11DeviceContext> m_context;
 
@@ -60,20 +67,25 @@ public:
     ComPtr<ID3D11Texture2D> m_backBuffer;
     ComPtr<ID3D11RenderTargetView> m_baseRTV;
     D3D11_VIEWPORT m_viewport;
+    ComPtr<ID3D11RasterizerState> m_rasterizerState;
 
-    //
+    ComPtr<ID3D11Texture2D> m_depthStencilBuffer;
+    ComPtr<ID3D11DepthStencilView> m_depthStencilView;
+    ComPtr<ID3D11DepthStencilState> m_depthStencilState;
+
+    // SRV, RTV
     std::vector<ComPtr<ID3D11ShaderResourceView>> m_imageSRVs;
     ComPtr<ID3D11RenderTargetView> m_imageRTV;
 
     ComPtr<ID3D11ShaderResourceView> m_canvasSRV;
     ComPtr<ID3D11RenderTargetView> m_canvasRTV;
 
-    //
-    ComPtr<ID3D11InputLayout> m_inputLayout;
-
+    // shaders
+    ComPtr<ID3D11InputLayout> m_inputLayout2D;
     ComPtr<ID3D11VertexShader> m_vertexShader2D;
     ComPtr<ID3D11PixelShader> m_pixelShader2D;
 
+    ComPtr<ID3D11InputLayout> m_inputLayout3D;
     ComPtr<ID3D11VertexShader> m_vertexShader3D;
     ComPtr<ID3D11PixelShader> m_pixelShader3D;
 

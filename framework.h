@@ -24,4 +24,5 @@
 #include <vector>
 
 using namespace Microsoft::WRL;
+using namespace DirectX;
 using namespace DirectX::SimpleMath;

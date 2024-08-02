@@ -1,29 +1,33 @@
 cbuffer MVP : register(b0)
 {
+    matrix model;
     matrix view;
+    matrix projection;
 };
 
 struct VSInput
 {
-    float4 position : POSITION;
-    float4 color : COLOR;
-    float2 uv : TEXCOORD;
+    float3 position : POSITION;
+    float3 color : COLOR;
 };
 
 struct VSOutput
 {
     float4 position : SV_POSITION;
-    float4 color : COLOR;
-    float2 uv : TEXCOORD;
+    float3 color : COLOR;
 };
 
 VSOutput main(VSInput input)
 {
     VSOutput output;
+    float4 pos = float4(input.position, 1.0);
     
-    output.position = mul(input.position, view);
+    pos = mul(pos, model);
+    pos = mul(pos, view);
+    pos = mul(pos, projection);
+    
+    output.position = pos;
     output.color = input.color;
-    output.uv = input.uv;
     
     return output;
 }
