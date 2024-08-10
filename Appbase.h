@@ -20,6 +20,7 @@ struct Vertex3D
 {
     Vector3 position;
     Vector3 color;
+    Vector3 normal;
 };
 
 class Appbase
@@ -41,6 +42,25 @@ public:
     virtual void Render() = 0;
     virtual void UpdateGUI() = 0;
 
+    virtual void KeyControl(int keyPressed) = 0;
+
+    void CreateVertexShaderAndInputLayout(
+        const std::wstring& filename,
+        ComPtr<ID3D11VertexShader>& vertexShader,
+        const std::vector<D3D11_INPUT_ELEMENT_DESC>& inputElement,
+        ComPtr<ID3D11InputLayout>& inputLayout
+    );
+
+    void CreatePixelShader(
+        const std::wstring& filename,
+        ComPtr<ID3D11PixelShader>& pixelShader
+    );
+
+    void CreateGeometryShader(
+        const std::wstring& filename,
+        ComPtr<ID3D11GeometryShader>& geometryShader
+    );
+
     template <typename T>
     void UpdateBuffer(ComPtr<ID3D11Buffer>& buffer, const T& bufferData)
     {
@@ -57,7 +77,7 @@ public:
     HWND m_hWnd;
 
     int m_width, m_height;
-    FLOAT m_initColor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+    FLOAT m_initColor[4] = { 0.4f, 0.4f, 0.4f, 1.0f };
 
     // init
     ComPtr<ID3D11Device> m_device;
@@ -88,6 +108,14 @@ public:
     ComPtr<ID3D11InputLayout> m_inputLayout3D;
     ComPtr<ID3D11VertexShader> m_vertexShader3D;
     ComPtr<ID3D11PixelShader> m_pixelShader3D;
+    ComPtr<ID3D11GeometryShader> m_geometryShaderGrid;
+
+    ComPtr<ID3D11InputLayout> m_inputLayoutGrid;
+    ComPtr<ID3D11VertexShader> m_vertexShaderGrid;
+    ComPtr<ID3D11PixelShader> m_pixelShaderGrid;
+
+    ComPtr<ID3D11VertexShader> m_vertexShaderNormal3D;
+    ComPtr<ID3D11PixelShader> m_pixelShaderNormal3D;
 
     // mouse
     int m_mousePosX;
@@ -95,8 +123,10 @@ public:
     glm::vec2 GetMousePos();
     void SetMousePos(int posX, int posY);
     bool m_isDragging = false;
+    bool m_isLButtonPressed = false;
+    bool m_isMButtonPressed = false;
 
     // keyboard
-    bool m_isLButtonPressed = false;
+    bool m_key[256] = { false };
 };
 

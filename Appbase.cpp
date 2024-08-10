@@ -294,18 +294,23 @@ LRESULT Appbase::MsgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     switch (message)
     {
     case WM_CREATE:
+    {
         AllocConsole();
         SetConsoleTitle(TEXT("MyEngine"));
-        _tfreopen(_T("CONOUT$"), _T("w"), stdout);
-        _tfreopen(_T("CONERR$"), _T("w"), stderr);
+
+        FILE* fp;
+        fp = _tfreopen(_T("CONOUT$"), _T("w"), stdout);
+        fp = _tfreopen(_T("CONERR$"), _T("w"), stderr);
         _tsetlocale(LC_ALL, _T(""));
+
         break;
+    }
     case WM_SYSCOMMAND:
         if ((wParam & 0xfff0) == SC_KEYMENU) // Disable ALT application menu 
             return 0;
         break;
     case WM_MOUSEMOVE:
-        //std::cout << "Mouse " << LOWORD(lParam) << " " << HIWORD(lParam) << std::endl;
+        std::cout << "Mouse " << LOWORD(lParam) << " " << HIWORD(lParam) << std::endl;
         SetMousePos(LOWORD(lParam), HIWORD(lParam));
         break;
     case WM_LBUTTONDOWN:
@@ -317,11 +322,23 @@ LRESULT Appbase::MsgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         m_isDragging = false;
         m_isLButtonPressed = false;
         break;
+    case WM_MBUTTONDOWN:
+        m_isMButtonPressed = true;
+        break;
+    case WM_MBUTTONUP:
+        m_isDragging = false;
+        m_isMButtonPressed = false;
+        break;
     case WM_RBUTTONUP:
         std::cout << "WM_RBUTTONUP Right mouse button" << std::endl;
         break;
     case WM_KEYDOWN:
         std::cout << "WM_KEYDOWN " << (int)wParam << std::endl;
+        KeyControl((int)wParam);
+        break;
+    case WM_KEYUP:
+        std::cout << "WM_KEYUP " << (int)wParam << std::endl;
+        //m_key[wParam] = false;
         break;
     case WM_DESTROY:
         PostQuitMessage(0);
@@ -369,6 +386,56 @@ int Appbase::Run()
     }
 
     return 0;
+}
+
+void Appbase::CreateVertexShaderAndInputLayout(const std::wstring &filename, ComPtr<ID3D11VertexShader>& vertexShader,
+    const vector<D3D11_INPUT_ELEMENT_DESC> &inputElement, ComPtr<ID3D11InputLayout> &inputLayout)
+{
+    HRESULT hr = S_OK;
+
+    ComPtr<ID3DBlob> shaderBlob;
+    ComPtr<ID3DBlob> errorBlob;
+
+    UINT compileFlags = 0;
+#if defined(DEBUG) || defined(_DEBUG)
+    compileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
+#endif
+
+    hr = D3DCompileFromFile(filename.c_str(), 0, 0, "main", "vs_5_0", compileFlags, 0, shaderBlob.GetAddressOf(), errorBlob.GetAddressOf());
+    hr = m_device->CreateVertexShader(shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize(), NULL, vertexShader.GetAddressOf());
+    hr = m_device->CreateInputLayout(inputElement.data(), inputElement.size(), shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize(), inputLayout.GetAddressOf());
+}
+
+void Appbase::CreatePixelShader(const std::wstring &filename, ComPtr<ID3D11PixelShader> &pixelShader)
+{
+    HRESULT hr = S_OK;
+
+    ComPtr<ID3DBlob> shaderBlob;
+    ComPtr<ID3DBlob> errorBlob;
+
+    UINT compileFlags = 0;
+#if defined(DEBUG) || defined(_DEBUG)
+    compileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
+#endif
+
+    hr = D3DCompileFromFile(filename.c_str(), 0, 0, "main", "ps_5_0", compileFlags, 0, shaderBlob.GetAddressOf(), errorBlob.GetAddressOf());
+    hr = m_device->CreatePixelShader(shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize(), NULL, pixelShader.GetAddressOf());
+}
+
+void Appbase::CreateGeometryShader(const std::wstring& filename, ComPtr<ID3D11GeometryShader>& geometryShader)
+{
+    HRESULT hr = S_OK;
+
+    ComPtr<ID3DBlob> shaderBlob;
+    ComPtr<ID3DBlob> errorBlob;
+
+    UINT compileFlags = 0;
+#if defined(DEBUG) || defined(_DEBUG)
+    compileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
+#endif
+
+    hr = D3DCompileFromFile(filename.c_str(), 0, 0, "main", "gs_5_0", compileFlags, 0, shaderBlob.GetAddressOf(), errorBlob.GetAddressOf());
+    hr = m_device->CreateGeometryShader(shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize(), NULL, geometryShader.GetAddressOf());
 }
 
 void Appbase::SetMousePos(int posX, int posY)

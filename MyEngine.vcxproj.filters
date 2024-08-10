@@ -102,5 +102,10 @@
     <FxCompile Include="PS3D.hlsl" />
     <FxCompile Include="PS2D.hlsl" />
     <FxCompile Include="VS2D.hlsl" />
+    <FxCompile Include="NormalVS3D.hlsl" />
+    <FxCompile Include="NormalPS3D.hlsl" />
+    <FxCompile Include="GSGrid.hlsl" />
+    <FxCompile Include="VSGrid.hlsl" />
+    <FxCompile Include="PSGrid.hlsl" />
   </ItemGroup>
 </Project>

@@ -101,6 +101,7 @@ void MakeBox(vector<Vertex3D> &vertices, vector<uint16_t> &indices)
         Vertex3D vertex;
         vertex.position = positions[i];
         vertex.color = colors[i];
+        vertex.normal = normals[i];
         vertices.push_back(vertex);
     }
 
@@ -310,7 +311,7 @@ bool ExampleApp::Initialize()
         const HRESULT hr = m_device->CreateBuffer(&bufferDesc, &vertexBufferData, m_vertexBuffer2D.GetAddressOf());
 
         if (FAILED(hr)) {
-            std::cout << "Failed: CreateBuffer()_Vertex0" << std::endl;
+            std::cout << "Failed: CreateBuffer()_Vertex2D" << std::endl;
             return false;
         }
     }
@@ -342,7 +343,7 @@ bool ExampleApp::Initialize()
         const HRESULT hr = m_device->CreateBuffer(&bufferDesc, &indexBufferData, m_indexBuffer2D.GetAddressOf());
 
         if (FAILED(hr)) {
-            std::cout << "Failed: CreateBuffer()_Index" << std::endl;
+            std::cout << "Failed: CreateBuffer()_Index2D" << std::endl;
             return false;
         };
     }
@@ -353,6 +354,7 @@ bool ExampleApp::Initialize()
     // vertices
     {
         D3D11_BUFFER_DESC bufferDesc;
+        ZeroMemory(&bufferDesc, sizeof(bufferDesc));
         bufferDesc.Usage = D3D11_USAGE_DYNAMIC;                // write access access by CPU and GPU
         bufferDesc.ByteWidth = UINT(sizeof(Vertex3D) * m_model->vertices.size());             // size is the VERTEX struct * 3
         bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;       // use as a vertex buffer
@@ -368,7 +370,7 @@ bool ExampleApp::Initialize()
         const HRESULT hr = m_device->CreateBuffer(&bufferDesc, &vertexBufferData, m_vertexBuffer3D.GetAddressOf());
 
         if (FAILED(hr)) {
-            std::cout << "Failed: CreateBuffer()_Vertex1" << std::endl;
+            std::cout << "Failed: CreateBuffer()_Vertex3D" << std::endl;
             return false;
         };
     }
@@ -394,12 +396,11 @@ bool ExampleApp::Initialize()
         const HRESULT hr = m_device->CreateBuffer(&bufferDesc, &indexBufferData, m_indexBuffer3D.GetAddressOf());
 
         if (FAILED(hr)) {
-            std::cout << "Failed: CreateBuffer()_Index" << std::endl;
+            std::cout << "Failed: CreateBuffer()_Index3D" << std::endl;
             return false;
         };
     }
     
-
     ///////////////////////////////////
     // create vertex constant buffer //
     ///////////////////////////////////
@@ -452,69 +453,90 @@ bool ExampleApp::Initialize()
         };
     }
 
+    ////////////////////////
+    // create grid buffer //
+    ////////////////////////
+    {
+        D3D11_BUFFER_DESC bufferDesc;
+        ZeroMemory(&bufferDesc, sizeof(bufferDesc));
+        bufferDesc.Usage = D3D11_USAGE_DYNAMIC;                // write access access by CPU and GPU
+        bufferDesc.ByteWidth = UINT(sizeof(Vector3) * m_grid.size());
+        bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;       // use as a vertex buffer
+        bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;    // allow CPU to write in buffer
+        bufferDesc.MiscFlags = 0;
+        bufferDesc.StructureByteStride = sizeof(Vector3);
+
+        D3D11_SUBRESOURCE_DATA vertexBufferData = { 0, };
+        vertexBufferData.pSysMem = m_grid.data();
+        vertexBufferData.SysMemPitch = 0;
+        vertexBufferData.SysMemSlicePitch = 0;
+
+        const HRESULT hr = m_device->CreateBuffer(&bufferDesc, &vertexBufferData, m_vertexBufferGrid.GetAddressOf());
+
+        if (FAILED(hr)) {
+            std::cout << "Failed: CreateBuffer()_VertexGrid" << std::endl;
+            return false;
+        };
+
+        m_indexCountGrid = m_grid.size();
+    }
+
     return true;
 }
 
 bool ExampleApp::InitShaders()
 {
-    HRESULT hr = S_OK;
-
-    ID3DBlob* vertexBlob = nullptr;
-    ID3DBlob* pixelBlob = nullptr;
-    ID3DBlob* errorBlob = nullptr;
-
     // 2D
-    if (FAILED(D3DCompileFromFile(L"VS2D.hlsl", 0, 0, "main", "vs_5_0", 0, 0, &vertexBlob, &errorBlob)))
-    {
-        if (errorBlob) {
-            std::cout << "Vertex shader compile error\n" << (char*)errorBlob->GetBufferPointer() << std::endl;
-        }
-    }
-
-    if (FAILED(D3DCompileFromFile(L"PS2D.hlsl", 0, 0, "main", "ps_5_0", 0, 0, &pixelBlob, &errorBlob)))
-    {
-        if (errorBlob) {
-            std::cout << "Pixel shader compile error\n" << (char*)errorBlob->GetBufferPointer() << std::endl;
-        }
-    }
-
-    hr = m_device->CreateVertexShader(vertexBlob->GetBufferPointer(), vertexBlob->GetBufferSize(), NULL, m_vertexShader2D.GetAddressOf());
-    hr = m_device->CreatePixelShader(pixelBlob->GetBufferPointer(), pixelBlob->GetBufferSize(), NULL, m_pixelShader2D.GetAddressOf());
-
-    D3D11_INPUT_ELEMENT_DESC inputLayout2D[] =
+    vector<D3D11_INPUT_ELEMENT_DESC> inputLayout2D =
     {
         {"POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
         {"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 16, D3D11_INPUT_PER_VERTEX_DATA, 0},
         {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 32, D3D11_INPUT_PER_VERTEX_DATA, 0},
     };
 
-    m_device->CreateInputLayout(inputLayout2D, 3, vertexBlob->GetBufferPointer(), vertexBlob->GetBufferSize(), m_inputLayout2D.GetAddressOf());
+    CreateVertexShaderAndInputLayout(L"VS2D.hlsl", m_vertexShader2D, inputLayout2D, m_inputLayout2D);
+    CreatePixelShader(L"PS2D.hlsl", m_pixelShader2D);
 
     // 3D
-    if (FAILED(D3DCompileFromFile(L"VS3D.hlsl", 0, 0, "main", "vs_5_0", 0, 0, &vertexBlob, &errorBlob)))
-    {
-        if (errorBlob) {
-            std::cout << "Vertex shader compile error\n" << (char*)errorBlob->GetBufferPointer() << std::endl;
-        }
-    }
-
-    if (FAILED(D3DCompileFromFile(L"PS3D.hlsl", 0, 0, "main", "ps_5_0", 0, 0, &pixelBlob, &errorBlob)))
-    {
-        if (errorBlob) {
-            std::cout << "Pixel shader compile error\n" << (char*)errorBlob->GetBufferPointer() << std::endl;
-        }
-    }
-
-    hr = m_device->CreateVertexShader(vertexBlob->GetBufferPointer(), vertexBlob->GetBufferSize(), NULL, m_vertexShader3D.GetAddressOf());
-    hr = m_device->CreatePixelShader(pixelBlob->GetBufferPointer(), pixelBlob->GetBufferSize(), NULL, m_pixelShader3D.GetAddressOf());
-
-    D3D11_INPUT_ELEMENT_DESC inputLayout3D[] =
+    vector<D3D11_INPUT_ELEMENT_DESC> inputLayout3D =
     {
         {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
         {"COLOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0},
+        {"NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0},
     };
 
-    m_device->CreateInputLayout(inputLayout3D, 2, vertexBlob->GetBufferPointer(), vertexBlob->GetBufferSize(), m_inputLayout3D.GetAddressOf());
+    CreateVertexShaderAndInputLayout(L"VS3D.hlsl", m_vertexShader3D, inputLayout3D, m_inputLayout3D);
+    CreatePixelShader(L"PS3D.hlsl", m_pixelShader3D);
+
+    // grid
+    vector<D3D11_INPUT_ELEMENT_DESC> inputLayoutGrid =
+    {
+        {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+    };
+
+    CreateVertexShaderAndInputLayout(L"VSGrid.hlsl", m_vertexShaderGrid, inputLayoutGrid, m_inputLayoutGrid);
+    CreateGeometryShader(L"GSGrid.hlsl", m_geometryShaderGrid);
+    CreatePixelShader(L"PSGrid.hlsl", m_pixelShaderGrid);
+
+    // normal
+    //if (FAILED(D3DCompileFromFile(L"NormalVS3D.hlsl", 0, 0, "main", "vs_5_0", 0, 0, &vertexBlob, &errorBlob)))
+    //{
+    //    if (errorBlob) {
+    //        std::cout << "Vertex shader compile error\n" << (char*)errorBlob->GetBufferPointer() << std::endl;
+    //    }
+    //}
+    //
+    //if (FAILED(D3DCompileFromFile(L"NormalPS3D.hlsl", 0, 0, "main", "ps_5_0", 0, 0, &pixelBlob, &errorBlob)))
+    //{
+    //    if (errorBlob) {
+    //        std::cout << "Pixel shader compile error\n" << (char*)errorBlob->GetBufferPointer() << std::endl;
+    //    }
+    //}
+    //
+    //hr = m_device->CreateVertexShader(vertexBlob->GetBufferPointer(), vertexBlob->GetBufferSize(), NULL, m_vertexShaderNormal3D.GetAddressOf());
+    //hr = m_device->CreatePixelShader(pixelBlob->GetBufferPointer(), pixelBlob->GetBufferSize(), NULL, m_pixelShaderNormal3D.GetAddressOf());
+    //
+    //m_device->CreateInputLayout(inputLayout3D, 2, vertexBlob->GetBufferPointer(), vertexBlob->GetBufferSize(), m_inputLayout3D.GetAddressOf());
 
     return true;
 }
@@ -552,30 +574,81 @@ void ExampleApp::Update()
     }
     else if (m_dimension == 3)
     {
-        //m_raytracer->Render(pixels);
-        
+        if (m_isMButtonPressed)
+        {
+            m_curMousePos = GetMousePos();
+
+            if (!m_isDragging)
+            {
+                m_isDragging = true;
+                m_prevMousePos = m_curMousePos;
+            }
+            else if (m_isDragging)
+            {
+                glm::vec2 translation = m_curMousePos - m_prevMousePos;
+                translation.x *= -1.0f;
+                translation /= 100.0f;
+
+                //m_modelRotation.y += translation.x;
+                //m_modelRotation.x += translation.y * cos(m_modelRotation.y);
+                //m_modelRotation.z += translation.y * sin(m_modelRotation.y);
+
+                m_viewAngle.x += translation.x;
+                m_viewAngle.y += translation.y;
+
+                m_viewPos.x = 5.0f * sin(m_viewAngle.x);
+                //m_viewPos.y = -5.0f * sin(m_viewAngle.y);
+                m_viewPos.z = -5.0f * cos(m_viewAngle.x);
+                //m_viewPos.z += -5.0f * cos(m_viewAngle.y);
+                
+                m_prevMousePos = m_curMousePos;
+            }
+        }
+
         // update vertex constant buffer
         /////////////////////////
         // update model matrix //
         /////////////////////////
-        m_vertexConstantBufferData.model = Matrix::CreateTranslation(m_modelTranslation);
+        m_vertexConstantBufferData.model = 
+            Matrix::CreateScale(m_modelScale) *
+            Matrix::CreateRotationX(m_modelRotation.x) *
+            Matrix::CreateRotationY(m_modelRotation.y) *
+            Matrix::CreateRotationZ(m_modelRotation.z) *
+            Matrix::CreateTranslation(m_modelTranslation);
         m_vertexConstantBufferData.model = m_vertexConstantBufferData.model.Transpose();
-
+        
         ////////////////////////
         // update view matrix //
         ////////////////////////
-        m_vertexConstantBufferData.view = XMMatrixLookToLH(m_viewPos, m_viewDir, m_viewUp);
+        m_vertexConstantBufferData.view = XMMatrixLookAtLH(m_viewPos, m_viewAt, m_viewUp);
+        //m_vertexConstantBufferData.view = XMMatrixLookToLH(m_viewPos, m_viewDir, m_viewUp);
         m_vertexConstantBufferData.view = m_vertexConstantBufferData.view.Transpose();
 
         //////////////////////////////
         // update projection matrix //
         //////////////////////////////
-        
         m_vertexConstantBufferData.projection = XMMatrixPerspectiveFovLH(
             XMConvertToRadians(m_fieldOfViewAngle), m_aspectRatio, m_nearZ, m_farZ);
         m_vertexConstantBufferData.projection = m_vertexConstantBufferData.projection.Transpose();
 
         UpdateBuffer(m_vertexConstantBuffer, m_vertexConstantBufferData);
+
+        ///////////////////
+        // update normal //
+        ///////////////////
+        m_normalVertexConstantBufferData.model = m_vertexConstantBufferData.model;
+        m_normalVertexConstantBufferData.inverseTranspose = m_normalVertexConstantBufferData.model.Invert();
+        m_normalVertexConstantBufferData.inverseTranspose = m_normalVertexConstantBufferData.inverseTranspose.Transpose();
+        m_normalVertexConstantBufferData.view = m_vertexConstantBufferData.view;
+        m_normalVertexConstantBufferData.projection = m_vertexConstantBufferData.projection;
+        m_normalVertexConstantBufferData.scale = m_normalScale;
+
+        //UpdateBuffer(m_normalVertexConstantBuffer, m_normalVertexConstantBufferData);
+
+        /////////////////
+        // update grid //
+        /////////////////
+        //UpdateBuffer(m_vertexConstantBuffer, m_vertexConstantBufferData);
 
         // update canvas  
         //D3D11_MAPPED_SUBRESOURCE ms;
@@ -620,25 +693,6 @@ void ExampleApp::Render()
             m_context->PSSetShaderResources(0, 1, m_canvasSRV.GetAddressOf());
         }
 
-        //if (m_isLButtonPressed)
-        //{
-        //    m_curMousePos = GetMousePos();
-        //
-        //    if (m_raytracer->sphere->IsInside(m_curMousePos) && !m_isDragging)
-        //    {
-        //        m_isDragging = true;
-        //        m_prevMousePos = m_curMousePos;
-        //    }
-        //    else if (m_isDragging)
-        //    {
-        //        glm::vec2 translation = m_curMousePos - m_prevMousePos;
-        //
-        //        m_raytracer->sphere->center.x += translation.x;
-        //        m_raytracer->sphere->center.y += translation.y;
-        //        m_prevMousePos = m_curMousePos;
-        //    }
-        //}
-
         m_context->PSSetConstantBuffers(0, 1, m_pixelConstantBuffer.GetAddressOf());
         m_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
@@ -665,6 +719,28 @@ void ExampleApp::Render()
         m_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
         m_context->DrawIndexed(m_indexCount3D, 0, 0);
+
+        if (m_drawNormal)
+        {
+            m_context->VSSetShader(m_vertexShaderNormal3D.Get(), 0, 0);
+            m_context->PSSetShader(m_pixelShaderNormal3D.Get(), 0, 0);
+
+        
+        }
+
+        m_context->IASetInputLayout(m_inputLayoutGrid.Get());
+        m_context->VSSetShader(m_vertexShaderGrid.Get(), 0, 0);
+        m_context->GSSetShader(m_geometryShaderGrid.Get(), 0, 0);
+        m_context->GSSetConstantBuffers(0, 1, m_vertexConstantBuffer.GetAddressOf());
+        m_context->PSSetShader(m_pixelShaderGrid.Get(), 0, 0);
+
+        stride = sizeof(Vector3);
+        m_context->IASetVertexBuffers(0, 1, m_vertexBufferGrid.GetAddressOf(), &stride, &offset);
+        m_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
+
+        m_context->Draw(m_indexCountGrid, 0);
+
+        m_context->GSSetShader(nullptr, 0, 0);
     }
 }
 
@@ -687,40 +763,64 @@ void ExampleApp::UpdateGUI()
         ImGui::Text("Image");
         ImGui::Checkbox("Image Texture", &m_textureOn);
         ImGui::SliderFloat("Threshold", &m_pixelConstantBufferData.threshold, 0.0f, 1.0f);
-
-        if (!m_textureOn)
-        {
-            //ImGui::Text("Circle");
-            //ImGui::SliderFloat2("Position", &m_raytracer->sphere->center.x, -m_height / 2, m_height / 2);
-            //ImGui::SliderFloat("Radius", &m_raytracer->sphere->radius, 0.0f, 1000.0f);
-            //ImGui::SliderFloat3("Color", &m_raytracer->sphere->diffuse.r, 0.0f, 1.0f);
-            //ImGui::SliderFloat3("Backround Color", m_initColor, 0.0f, 1.0f);
-        }
     }
     else if (m_dimension == 3)
     {
-        ImGui::Text("Box");
-        ImGui::SliderFloat3("Model Position", &m_modelTranslation.x, -2.0f, 2.0f);
-        ImGui::SliderFloat3("View Position", &m_viewPos.x, -2.0f, 2.0f);
-        ImGui::SliderFloat3("View Direction", &m_viewDir.x, -2.0f, 2.0f);
-        ImGui::SliderFloat("Field Of View", &m_fieldOfViewAngle, 50.0f, 150.0f);
-        ImGui::SliderFloat("Near Z", &m_nearZ, 0.01f, 10.0f);
-        ImGui::SliderFloat("Far Z", &m_farZ, m_nearZ + 0.01f, 10.0f);
-        ImGui::SliderFloat("Aspect Ratio", &m_aspectRatio, 0.1f, 3.0f);
+        ImGui::Checkbox("Draw Normal", &m_drawNormal);
+        ImGui::SliderFloat("Normal Scale", &m_normalScale, 0.0, 5.0);
 
-        //ImGui::Text("My Position");
-        //ImGui::SliderFloat("X", &example->m_raytracer->eyePos.x, -5.0f, 5.0f);
-        //ImGui::SliderFloat("Y", &example->m_raytracer->eyePos.y, -5.0f, 5.0f);
-        //ImGui::SliderFloat("Z", &example->m_raytracer->eyePos.z, -5.0f, 5.0f);
-
-        //ImGui::Text("Sphere");
-        //ImGui::SliderFloat3("Sphere Position", &m_raytracer->sphere->center.x, -m_height / 2, m_height / 2);
-        //ImGui::SliderFloat("Radius", &m_raytracer->sphere->radius, 0.0f, 1000.0f);
-        //ImGui::SliderFloat("Reflection", &m_raytracer->sphere->reflection, 0.0f, 1.0f);
-        //ImGui::SliderFloat3("Ambient", &m_raytracer->sphere->ambient.r, 0.0f, 1.0f);
-        //ImGui::SliderFloat3("Diffuse", &m_raytracer->sphere->diffuse.r, 0.0f, 1.0f);
-        //ImGui::SliderFloat3("Specular", &m_raytracer->sphere->specular.r, 0.0f, 1.0f);
-        //ImGui::Text("Light");
-        //ImGui::SliderFloat3("Light Position", &m_raytracer->light.pos.x, -500.0f, 500.0f);
+        if (m_appState == APP_STATE::HOME)
+        {
+            ImGui::Text("Box");
+            ImGui::SliderFloat3("Model Position", &m_modelTranslation.x, -2.0f, 2.0f);
+            ImGui::SliderFloat3("View Position", &m_viewPos.x, -2.0f, 2.0f);
+            ImGui::SliderFloat3("View Direction", &m_viewDir.x, -2.0f, 2.0f);
+            ImGui::SliderFloat3("View At", &m_viewAt.x, -2.0f, 2.0f);
+            ImGui::SliderFloat("Field Of View", &m_fieldOfViewAngle, 50.0f, 150.0f);
+            ImGui::SliderFloat("Near Z", &m_nearZ, 0.01f, 10.0f);
+            ImGui::SliderFloat("Far Z", &m_farZ, m_nearZ + 0.01f, 1000.0f);
+            ImGui::SliderFloat("Aspect Ratio", &m_aspectRatio, 0.1f, 3.0f);
+        }
+        else if (m_appState == APP_STATE::EDIT_SCALE)
+        {
+            ImGui::Text("Scale");
+            ImGui::SliderFloat3("Model Scale", &m_modelScale.x, 0.0f, 3.0f);
+        }
+        else if (m_appState == APP_STATE::EDIT_ROTATE)
+        {
+            ImGui::Text("Rotate");
+            ImGui::SliderFloat3("Model Rotate", &m_modelRotation.x, -3.0f, 3.0f);
+        }
     }   
+}
+
+void ExampleApp::KeyControl(int keyPressed)
+{
+    if (m_appState == APP_STATE::HOME)
+    {
+        if (keyPressed == 27)
+            DestroyWindow(m_hWnd);
+        else if (keyPressed == 'S')
+            m_appState = APP_STATE::EDIT_SCALE;
+        else if (keyPressed == 'R')
+            m_appState = APP_STATE::EDIT_ROTATE;
+        else if (keyPressed == 'T')
+            m_appState = APP_STATE::EDIT_TRANSLATE;
+    }
+    else if (m_appState == APP_STATE::EDIT_SCALE)
+    {
+        if (keyPressed == 27)
+            m_appState = APP_STATE::HOME;
+    }
+    else if (m_appState == APP_STATE::EDIT_ROTATE)
+    {
+        if (keyPressed == 27)
+            m_appState = APP_STATE::HOME;
+    }
+    else if (m_appState == APP_STATE::EDIT_ROTATE)
+    {
+        if (keyPressed == 27)
+            m_appState = APP_STATE::HOME;
+    }
+
 }
