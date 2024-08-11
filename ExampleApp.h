@@ -85,11 +85,16 @@ public:
     Vector3 m_modelRotation = Vector3(0.0f);
     Vector3 m_modelTranslation = Vector3(0.0f);
 
-    glm::vec2 m_viewAngle = { 0.0f, 0.0f };
-    Vector3 m_viewPos = { 0.0f, 0.0f, -5.0f };
+    bool m_isViewMoved = true;
+
+    glm::vec2 m_viewPosAngle = { 0.0f, 0.0f };
+    int m_viewRotateDirection = -1; // 보통 회전:-1, 화면 상하 반전 시 회전:1
+    float m_viewDistance = 5.0f;
+    
+    Vector3 m_viewPos = { 0.0f, 0.0f, -m_viewDistance };
     Vector3 m_viewDir = { 0.0f, 0.0f, 1.0f };
     Vector3 m_viewUp = { 0.0f, 1.0f, 0.0f };
-    Vector3 m_viewAt = { 0.0f, 0.0f, 0.0f };
+    Vector3 m_viewLookAt = { 0.0f, 0.0f, 0.0f };
 
     float m_fieldOfViewAngle = 90.0f;
     float m_nearZ = 0.01f;
@@ -111,7 +116,6 @@ public:
     // objects
     std::vector<Vector3> m_grid =
     {
-        { 0.0f, 0.0f, 0.0f },
         { 1.0f, 0.0f, 0.0f },
         { 0.0f, 1.0f, 0.0f },
         { 0.0f, 0.0f, 1.0f }

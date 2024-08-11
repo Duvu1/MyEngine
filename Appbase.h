@@ -122,9 +122,17 @@ public:
     int m_mousePosY;
     glm::vec2 GetMousePos();
     void SetMousePos(int posX, int posY);
-    bool m_isDragging = false;
+
+    // // click
     bool m_isLButtonPressed = false;
     bool m_isMButtonPressed = false;
+
+    // // hold
+    bool m_isDragging = false;
+
+    // // scroll
+    bool m_isScrolling = false;
+    int m_mouseWheelDirection = 0;
 
     // keyboard
     bool m_key[256] = { false };

@@ -13,22 +13,25 @@ struct GSInput
 struct GSOutput
 {
     float4 position : SV_Position;
-    uint primitiveID : SV_PrimitiveID;
+    float4 color : COLOR;
+    //uint primitiveID : SV_PrimitiveID;
 };
 
 [maxvertexcount(100)]
-void main(point GSInput input[1], uint primitiveID : SV_PrimitiveID,
+void main(point GSInput input[1], //uint primitiveID : SV_PrimitiveID,
           inout LineStream<GSOutput> outputStream)
 {
     GSOutput output;
-    
-    //output.position = input[0].position;
-    
+        
     for (int i = -50; i < 50; i++)
     {
-        float offset = i * 10;
-        output.position = input[0].position * float4(i, i, i, 1.0);
-        output.primitiveID = primitiveID;
+        float offset = i;
+        
+        output.position = input[0].position;
+        output.color = output.position;
+        //output.primitiveID = primitiveID;
+        
+        output.position.xyz *= offset;
         
         output.position = mul(output.position, view);
         output.position = mul(output.position, projection);

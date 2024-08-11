@@ -329,6 +329,17 @@ LRESULT Appbase::MsgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         m_isDragging = false;
         m_isMButtonPressed = false;
         break;
+    case WM_MOUSEWHEEL:
+        std::cout << "WM_MOUSEWHEEL " << (int)wParam << std::endl;
+        m_isScrolling = true;
+
+        if ((int)wParam > 0)
+            m_mouseWheelDirection = 1;
+        else if ((int)wParam < 0)
+            m_mouseWheelDirection = -1;
+        else
+            m_mouseWheelDirection = 0;
+        break;
     case WM_RBUTTONUP:
         std::cout << "WM_RBUTTONUP Right mouse button" << std::endl;
         break;
