@@ -1,6 +1,7 @@
 cbuffer MVP : register(b0)
 {
     matrix model;
+    matrix inverseTranspose; // not used in this shader
     matrix view;
     matrix projection;
 }

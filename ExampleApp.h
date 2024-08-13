@@ -19,6 +19,7 @@ enum class APP_STATE
 struct VSConstantBufferData
 {
     Matrix model = Matrix();
+    Matrix inverseTranspose = Matrix();
     Matrix view = Matrix();
     Matrix projection = Matrix();
 };
@@ -35,8 +36,19 @@ struct NormalConstantBufferData
 
 struct PSConstantBufferData
 {
+    Vector3 eyePosition;
+    float dummy;
+};
+
+struct PSConstantBufferData2D
+{
     float threshold = 0.0f;
     float dummy[3];
+};
+
+struct WorldLight
+{
+    Vector4 direction = { 0.0f, 0.0f, 1.0f, 0.0f };
 };
 
 class ExampleApp : public Appbase
@@ -80,6 +92,8 @@ public:
     ComPtr<ID3D11Buffer> m_pixelConstantBuffer;
     ComPtr<ID3D11Buffer> m_geometryConstantBuffer;
 
+    ComPtr<ID3D11Buffer> m_pixelConstantBuffer2D;
+
     // MVP
     Vector3 m_modelScale = Vector3(1.0f);
     Vector3 m_modelRotation = Vector3(0.0f);
@@ -101,6 +115,9 @@ public:
     float m_farZ = 100.0f;
     float m_aspectRatio = GetAspectRatio();
 
+    // world light
+    
+
     // texture
     ComPtr<ID3D11SamplerState> m_samplerState;
     ComPtr<ID3D11Texture2D> m_canvasTexture;
@@ -112,6 +129,8 @@ public:
     VSConstantBufferData m_vertexConstantBufferData;
     NormalConstantBufferData m_normalVertexConstantBufferData;
     PSConstantBufferData m_pixelConstantBufferData;
+
+    PSConstantBufferData2D m_pixelConstantBufferData2D;
 
     // objects
     std::vector<Vector3> m_grid =

@@ -17,10 +17,14 @@ void MakeBox(vector<Vertex3D> &vertices, vector<uint16_t> &indices)
     positions.push_back(Vector3(-1.0f, 1.0f, 1.0f) * scale);
     positions.push_back(Vector3(1.0f, 1.0f, 1.0f) * scale);
     positions.push_back(Vector3(1.0f, 1.0f, -1.0f) * scale);
-    colors.push_back(Vector3(1.0f, 0.0f, 0.0f));
-    colors.push_back(Vector3(1.0f, 0.0f, 0.0f));
-    colors.push_back(Vector3(1.0f, 0.0f, 0.0f));
-    colors.push_back(Vector3(1.0f, 0.0f, 0.0f));
+    //colors.push_back(Vector3(1.0f, 0.0f, 0.0f));
+    //colors.push_back(Vector3(1.0f, 0.0f, 0.0f));
+    //colors.push_back(Vector3(1.0f, 0.0f, 0.0f));
+    //colors.push_back(Vector3(1.0f, 0.0f, 0.0f));
+    colors.push_back(Vector3(0.5f, 0.5f, 0.5f));
+    colors.push_back(Vector3(0.5f, 0.5f, 0.5f));
+    colors.push_back(Vector3(0.5f, 0.5f, 0.5f));
+    colors.push_back(Vector3(0.5f, 0.5f, 0.5f));
     normals.push_back(Vector3(0.0f, 1.0f, 0.0f));
     normals.push_back(Vector3(0.0f, 1.0f, 0.0f));
     normals.push_back(Vector3(0.0f, 1.0f, 0.0f));
@@ -31,10 +35,14 @@ void MakeBox(vector<Vertex3D> &vertices, vector<uint16_t> &indices)
     positions.push_back(Vector3(1.0f, -1.0f, -1.0f) * scale);
     positions.push_back(Vector3(1.0f, -1.0f, 1.0f) * scale);
     positions.push_back(Vector3(-1.0f, -1.0f, 1.0f) * scale);
-    colors.push_back(Vector3(0.0f, 1.0f, 0.0f));
-    colors.push_back(Vector3(0.0f, 1.0f, 0.0f));
-    colors.push_back(Vector3(0.0f, 1.0f, 0.0f));
-    colors.push_back(Vector3(0.0f, 1.0f, 0.0f));
+    //colors.push_back(Vector3(0.0f, 1.0f, 0.0f));
+    //colors.push_back(Vector3(0.0f, 1.0f, 0.0f));
+    //colors.push_back(Vector3(0.0f, 1.0f, 0.0f));
+    //colors.push_back(Vector3(0.0f, 1.0f, 0.0f));
+    colors.push_back(Vector3(0.5f, 0.5f, 0.5f));
+    colors.push_back(Vector3(0.5f, 0.5f, 0.5f));
+    colors.push_back(Vector3(0.5f, 0.5f, 0.5f));
+    colors.push_back(Vector3(0.5f, 0.5f, 0.5f));
     normals.push_back(Vector3(0.0f, -1.0f, 0.0f));
     normals.push_back(Vector3(0.0f, -1.0f, 0.0f));
     normals.push_back(Vector3(0.0f, -1.0f, 0.0f));
@@ -45,10 +53,14 @@ void MakeBox(vector<Vertex3D> &vertices, vector<uint16_t> &indices)
     positions.push_back(Vector3(-1.0f, 1.0f, -1.0f) * scale);
     positions.push_back(Vector3(1.0f, 1.0f, -1.0f) * scale);
     positions.push_back(Vector3(1.0f, -1.0f, -1.0f) * scale);
-    colors.push_back(Vector3(0.0f, 0.0f, 1.0f));
-    colors.push_back(Vector3(0.0f, 0.0f, 1.0f));
-    colors.push_back(Vector3(0.0f, 0.0f, 1.0f));
-    colors.push_back(Vector3(0.0f, 0.0f, 1.0f));
+    //colors.push_back(Vector3(0.0f, 0.0f, 1.0f));
+    //colors.push_back(Vector3(0.0f, 0.0f, 1.0f));
+    //colors.push_back(Vector3(0.0f, 0.0f, 1.0f));
+    //colors.push_back(Vector3(0.0f, 0.0f, 1.0f));
+    colors.push_back(Vector3(0.5f, 0.5f, 0.5f));
+    colors.push_back(Vector3(0.5f, 0.5f, 0.5f));
+    colors.push_back(Vector3(0.5f, 0.5f, 0.5f));
+    colors.push_back(Vector3(0.5f, 0.5f, 0.5f));
     normals.push_back(Vector3(0.0f, 0.0f, -1.0f));
     normals.push_back(Vector3(0.0f, 0.0f, -1.0f));
     normals.push_back(Vector3(0.0f, 0.0f, -1.0f));
@@ -59,10 +71,14 @@ void MakeBox(vector<Vertex3D> &vertices, vector<uint16_t> &indices)
     positions.push_back(Vector3(1.0f, -1.0f, 1.0f) * scale);
     positions.push_back(Vector3(1.0f, 1.0f, 1.0f) * scale);
     positions.push_back(Vector3(-1.0f, 1.0f, 1.0f) * scale);
-    colors.push_back(Vector3(0.0f, 1.0f, 1.0f));
-    colors.push_back(Vector3(0.0f, 1.0f, 1.0f));
-    colors.push_back(Vector3(0.0f, 1.0f, 1.0f));
-    colors.push_back(Vector3(0.0f, 1.0f, 1.0f));
+    //colors.push_back(Vector3(0.0f, 1.0f, 1.0f));
+    //colors.push_back(Vector3(0.0f, 1.0f, 1.0f));
+    //colors.push_back(Vector3(0.0f, 1.0f, 1.0f));
+    //colors.push_back(Vector3(0.0f, 1.0f, 1.0f));
+    colors.push_back(Vector3(0.5f, 0.5f, 0.5f));
+    colors.push_back(Vector3(0.5f, 0.5f, 0.5f));
+    colors.push_back(Vector3(0.5f, 0.5f, 0.5f));
+    colors.push_back(Vector3(0.5f, 0.5f, 0.5f));
     normals.push_back(Vector3(0.0f, 0.0f, 1.0f));
     normals.push_back(Vector3(0.0f, 0.0f, 1.0f));
     normals.push_back(Vector3(0.0f, 0.0f, 1.0f));
@@ -73,10 +89,14 @@ void MakeBox(vector<Vertex3D> &vertices, vector<uint16_t> &indices)
     positions.push_back(Vector3(-1.0f, 1.0f, 1.0f) * scale);
     positions.push_back(Vector3(-1.0f, 1.0f, -1.0f) * scale);
     positions.push_back(Vector3(-1.0f, -1.0f, -1.0f) * scale);
-    colors.push_back(Vector3(1.0f, 1.0f, 0.0f));
-    colors.push_back(Vector3(1.0f, 1.0f, 0.0f));
-    colors.push_back(Vector3(1.0f, 1.0f, 0.0f));
-    colors.push_back(Vector3(1.0f, 1.0f, 0.0f));
+    //colors.push_back(Vector3(1.0f, 1.0f, 0.0f));
+    //colors.push_back(Vector3(1.0f, 1.0f, 0.0f));
+    //colors.push_back(Vector3(1.0f, 1.0f, 0.0f));
+    //colors.push_back(Vector3(1.0f, 1.0f, 0.0f));
+    colors.push_back(Vector3(0.5f, 0.5f, 0.5f));
+    colors.push_back(Vector3(0.5f, 0.5f, 0.5f));
+    colors.push_back(Vector3(0.5f, 0.5f, 0.5f));
+    colors.push_back(Vector3(0.5f, 0.5f, 0.5f));
     normals.push_back(Vector3(-1.0f, 0.0f, 0.0f));
     normals.push_back(Vector3(-1.0f, 0.0f, 0.0f));
     normals.push_back(Vector3(-1.0f, 0.0f, 0.0f));
@@ -87,10 +107,14 @@ void MakeBox(vector<Vertex3D> &vertices, vector<uint16_t> &indices)
     positions.push_back(Vector3(1.0f, -1.0f, -1.0f) * scale);
     positions.push_back(Vector3(1.0f, 1.0f, -1.0f) * scale);
     positions.push_back(Vector3(1.0f, 1.0f, 1.0f) * scale);
-    colors.push_back(Vector3(1.0f, 0.0f, 1.0f));
-    colors.push_back(Vector3(1.0f, 0.0f, 1.0f));
-    colors.push_back(Vector3(1.0f, 0.0f, 1.0f));
-    colors.push_back(Vector3(1.0f, 0.0f, 1.0f));
+    //colors.push_back(Vector3(1.0f, 0.0f, 1.0f));
+    //colors.push_back(Vector3(1.0f, 0.0f, 1.0f));
+    //colors.push_back(Vector3(1.0f, 0.0f, 1.0f));
+    //colors.push_back(Vector3(1.0f, 0.0f, 1.0f));
+    colors.push_back(Vector3(0.5f, 0.5f, 0.5f));
+    colors.push_back(Vector3(0.5f, 0.5f, 0.5f));
+    colors.push_back(Vector3(0.5f, 0.5f, 0.5f));
+    colors.push_back(Vector3(0.5f, 0.5f, 0.5f));
     normals.push_back(Vector3(1.0f, 0.0f, 0.0f));
     normals.push_back(Vector3(1.0f, 0.0f, 0.0f));
     normals.push_back(Vector3(1.0f, 0.0f, 0.0f));
@@ -453,6 +477,32 @@ bool ExampleApp::Initialize()
         };
     }
 
+    ////////////////////////////////////
+    // create pixel constant buffer2D //
+    ////////////////////////////////////
+    {
+        D3D11_BUFFER_DESC bufferDesc;
+        ZeroMemory(&bufferDesc, sizeof(bufferDesc));
+        bufferDesc.Usage = D3D11_USAGE_DYNAMIC;                // write access access by CPU and GPU
+        bufferDesc.ByteWidth = sizeof(PSConstantBufferData2D);
+        bufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;     // use as a constant buffer
+        bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;    // allow CPU to write in buffer
+        bufferDesc.MiscFlags = 0;
+        bufferDesc.StructureByteStride = 0;
+
+        D3D11_SUBRESOURCE_DATA constantBufferData = { 0 };
+        constantBufferData.pSysMem = &m_pixelConstantBufferData2D;
+        constantBufferData.SysMemPitch = 0;
+        constantBufferData.SysMemSlicePitch = 0;
+
+        hr = m_device->CreateBuffer(&bufferDesc, &constantBufferData, m_pixelConstantBuffer2D.GetAddressOf());
+
+        if (FAILED(hr)) {
+            std::cout << "Failed: CreateBuffer()_PSConstant2D" << std::endl;
+            return false;
+        };
+    }
+
     ////////////////////////
     // create grid buffer //
     ////////////////////////
@@ -548,7 +598,7 @@ void ExampleApp::Update()
         std::vector<glm::vec4> pixels(m_width * m_height, glm::vec4(m_initColor[0], m_initColor[1], m_initColor[2], m_initColor[3]));
 
         // update pixel constant buffer
-        UpdateBuffer(m_pixelConstantBuffer, m_pixelConstantBufferData);
+        UpdateBuffer(m_pixelConstantBuffer2D, m_pixelConstantBufferData2D);
 
         if (!m_textureOn)
         {
@@ -637,12 +687,17 @@ void ExampleApp::Update()
                 Matrix::CreateTranslation(m_modelTranslation);
             m_vertexConstantBufferData.model = m_vertexConstantBufferData.model.Transpose();
 
+            m_vertexConstantBufferData.inverseTranspose = m_vertexConstantBufferData.model.Invert();
+            m_vertexConstantBufferData.inverseTranspose = m_vertexConstantBufferData.inverseTranspose.Transpose();
+
             ////////////////////////
             // update view matrix //
             ////////////////////////
             m_vertexConstantBufferData.view = XMMatrixLookAtLH(m_viewPos, m_viewLookAt, m_viewUp);
             //m_vertexConstantBufferData.view = XMMatrixLookToLH(m_viewPos, m_viewDir, m_viewUp);
             m_vertexConstantBufferData.view = m_vertexConstantBufferData.view.Transpose();
+
+            m_pixelConstantBufferData.eyePosition = m_viewPos;
 
             m_isViewMoved = false;
         }
@@ -655,6 +710,7 @@ void ExampleApp::Update()
         m_vertexConstantBufferData.projection = m_vertexConstantBufferData.projection.Transpose();
 
         UpdateBuffer(m_vertexConstantBuffer, m_vertexConstantBufferData);
+        UpdateBuffer(m_pixelConstantBuffer, m_pixelConstantBufferData);
 
         ///////////////////
         // update normal //
@@ -716,7 +772,7 @@ void ExampleApp::Render()
             m_context->PSSetShaderResources(0, 1, m_canvasSRV.GetAddressOf());
         }
 
-        m_context->PSSetConstantBuffers(0, 1, m_pixelConstantBuffer.GetAddressOf());
+        m_context->PSSetConstantBuffers(0, 1, m_pixelConstantBuffer2D.GetAddressOf());
         m_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
         m_context->DrawIndexed(m_indexCount2D, 0, 0);
@@ -739,6 +795,7 @@ void ExampleApp::Render()
         m_context->PSSetShaderResources(0, 1, m_canvasSRV.GetAddressOf());
 
         m_context->VSSetConstantBuffers(0, 1, m_vertexConstantBuffer.GetAddressOf());
+        m_context->PSSetConstantBuffers(0, 1, m_pixelConstantBuffer.GetAddressOf());
         m_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
         m_context->DrawIndexed(m_indexCount3D, 0, 0);
@@ -785,7 +842,7 @@ void ExampleApp::UpdateGUI()
     {
         ImGui::Text("Image");
         ImGui::Checkbox("Image Texture", &m_textureOn);
-        ImGui::SliderFloat("Threshold", &m_pixelConstantBufferData.threshold, 0.0f, 1.0f);
+        ImGui::SliderFloat("Threshold", &m_pixelConstantBufferData2D.threshold, 0.0f, 1.0f);
     }
     else if (m_dimension == 3)
     {
