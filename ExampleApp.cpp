@@ -4,147 +4,11 @@
 
 using namespace std;
 
-void MakeBox(vector<Vertex3D> &vertices, vector<uint16_t> &indices)
-{
-    vector<Vector3> positions;
-    vector<Vector3> colors;
-    vector<Vector3> normals;
-
-    const float scale = 1.0f;
-
-    // À­¸é
-    positions.push_back(Vector3(-1.0f, 1.0f, -1.0f) * scale);
-    positions.push_back(Vector3(-1.0f, 1.0f, 1.0f) * scale);
-    positions.push_back(Vector3(1.0f, 1.0f, 1.0f) * scale);
-    positions.push_back(Vector3(1.0f, 1.0f, -1.0f) * scale);
-    //colors.push_back(Vector3(1.0f, 0.0f, 0.0f));
-    //colors.push_back(Vector3(1.0f, 0.0f, 0.0f));
-    //colors.push_back(Vector3(1.0f, 0.0f, 0.0f));
-    //colors.push_back(Vector3(1.0f, 0.0f, 0.0f));
-    colors.push_back(Vector3(0.5f, 0.5f, 0.5f));
-    colors.push_back(Vector3(0.5f, 0.5f, 0.5f));
-    colors.push_back(Vector3(0.5f, 0.5f, 0.5f));
-    colors.push_back(Vector3(0.5f, 0.5f, 0.5f));
-    normals.push_back(Vector3(0.0f, 1.0f, 0.0f));
-    normals.push_back(Vector3(0.0f, 1.0f, 0.0f));
-    normals.push_back(Vector3(0.0f, 1.0f, 0.0f));
-    normals.push_back(Vector3(0.0f, 1.0f, 0.0f));
-
-    // ¾Æ·§¸é
-    positions.push_back(Vector3(-1.0f, -1.0f, -1.0f) * scale);
-    positions.push_back(Vector3(1.0f, -1.0f, -1.0f) * scale);
-    positions.push_back(Vector3(1.0f, -1.0f, 1.0f) * scale);
-    positions.push_back(Vector3(-1.0f, -1.0f, 1.0f) * scale);
-    //colors.push_back(Vector3(0.0f, 1.0f, 0.0f));
-    //colors.push_back(Vector3(0.0f, 1.0f, 0.0f));
-    //colors.push_back(Vector3(0.0f, 1.0f, 0.0f));
-    //colors.push_back(Vector3(0.0f, 1.0f, 0.0f));
-    colors.push_back(Vector3(0.5f, 0.5f, 0.5f));
-    colors.push_back(Vector3(0.5f, 0.5f, 0.5f));
-    colors.push_back(Vector3(0.5f, 0.5f, 0.5f));
-    colors.push_back(Vector3(0.5f, 0.5f, 0.5f));
-    normals.push_back(Vector3(0.0f, -1.0f, 0.0f));
-    normals.push_back(Vector3(0.0f, -1.0f, 0.0f));
-    normals.push_back(Vector3(0.0f, -1.0f, 0.0f));
-    normals.push_back(Vector3(0.0f, -1.0f, 0.0f));
-
-    // ¾Õ¸é
-    positions.push_back(Vector3(-1.0f, -1.0f, -1.0f) * scale);
-    positions.push_back(Vector3(-1.0f, 1.0f, -1.0f) * scale);
-    positions.push_back(Vector3(1.0f, 1.0f, -1.0f) * scale);
-    positions.push_back(Vector3(1.0f, -1.0f, -1.0f) * scale);
-    //colors.push_back(Vector3(0.0f, 0.0f, 1.0f));
-    //colors.push_back(Vector3(0.0f, 0.0f, 1.0f));
-    //colors.push_back(Vector3(0.0f, 0.0f, 1.0f));
-    //colors.push_back(Vector3(0.0f, 0.0f, 1.0f));
-    colors.push_back(Vector3(0.5f, 0.5f, 0.5f));
-    colors.push_back(Vector3(0.5f, 0.5f, 0.5f));
-    colors.push_back(Vector3(0.5f, 0.5f, 0.5f));
-    colors.push_back(Vector3(0.5f, 0.5f, 0.5f));
-    normals.push_back(Vector3(0.0f, 0.0f, -1.0f));
-    normals.push_back(Vector3(0.0f, 0.0f, -1.0f));
-    normals.push_back(Vector3(0.0f, 0.0f, -1.0f));
-    normals.push_back(Vector3(0.0f, 0.0f, -1.0f));
-
-    // µÞ¸é
-    positions.push_back(Vector3(-1.0f, -1.0f, 1.0f) * scale);
-    positions.push_back(Vector3(1.0f, -1.0f, 1.0f) * scale);
-    positions.push_back(Vector3(1.0f, 1.0f, 1.0f) * scale);
-    positions.push_back(Vector3(-1.0f, 1.0f, 1.0f) * scale);
-    //colors.push_back(Vector3(0.0f, 1.0f, 1.0f));
-    //colors.push_back(Vector3(0.0f, 1.0f, 1.0f));
-    //colors.push_back(Vector3(0.0f, 1.0f, 1.0f));
-    //colors.push_back(Vector3(0.0f, 1.0f, 1.0f));
-    colors.push_back(Vector3(0.5f, 0.5f, 0.5f));
-    colors.push_back(Vector3(0.5f, 0.5f, 0.5f));
-    colors.push_back(Vector3(0.5f, 0.5f, 0.5f));
-    colors.push_back(Vector3(0.5f, 0.5f, 0.5f));
-    normals.push_back(Vector3(0.0f, 0.0f, 1.0f));
-    normals.push_back(Vector3(0.0f, 0.0f, 1.0f));
-    normals.push_back(Vector3(0.0f, 0.0f, 1.0f));
-    normals.push_back(Vector3(0.0f, 0.0f, 1.0f));
-
-    // ¿ÞÂÊ
-    positions.push_back(Vector3(-1.0f, -1.0f, 1.0f) * scale);
-    positions.push_back(Vector3(-1.0f, 1.0f, 1.0f) * scale);
-    positions.push_back(Vector3(-1.0f, 1.0f, -1.0f) * scale);
-    positions.push_back(Vector3(-1.0f, -1.0f, -1.0f) * scale);
-    //colors.push_back(Vector3(1.0f, 1.0f, 0.0f));
-    //colors.push_back(Vector3(1.0f, 1.0f, 0.0f));
-    //colors.push_back(Vector3(1.0f, 1.0f, 0.0f));
-    //colors.push_back(Vector3(1.0f, 1.0f, 0.0f));
-    colors.push_back(Vector3(0.5f, 0.5f, 0.5f));
-    colors.push_back(Vector3(0.5f, 0.5f, 0.5f));
-    colors.push_back(Vector3(0.5f, 0.5f, 0.5f));
-    colors.push_back(Vector3(0.5f, 0.5f, 0.5f));
-    normals.push_back(Vector3(-1.0f, 0.0f, 0.0f));
-    normals.push_back(Vector3(-1.0f, 0.0f, 0.0f));
-    normals.push_back(Vector3(-1.0f, 0.0f, 0.0f));
-    normals.push_back(Vector3(-1.0f, 0.0f, 0.0f));
-
-    // ¿À¸¥ÂÊ
-    positions.push_back(Vector3(1.0f, -1.0f, 1.0f) * scale);
-    positions.push_back(Vector3(1.0f, -1.0f, -1.0f) * scale);
-    positions.push_back(Vector3(1.0f, 1.0f, -1.0f) * scale);
-    positions.push_back(Vector3(1.0f, 1.0f, 1.0f) * scale);
-    //colors.push_back(Vector3(1.0f, 0.0f, 1.0f));
-    //colors.push_back(Vector3(1.0f, 0.0f, 1.0f));
-    //colors.push_back(Vector3(1.0f, 0.0f, 1.0f));
-    //colors.push_back(Vector3(1.0f, 0.0f, 1.0f));
-    colors.push_back(Vector3(0.5f, 0.5f, 0.5f));
-    colors.push_back(Vector3(0.5f, 0.5f, 0.5f));
-    colors.push_back(Vector3(0.5f, 0.5f, 0.5f));
-    colors.push_back(Vector3(0.5f, 0.5f, 0.5f));
-    normals.push_back(Vector3(1.0f, 0.0f, 0.0f));
-    normals.push_back(Vector3(1.0f, 0.0f, 0.0f));
-    normals.push_back(Vector3(1.0f, 0.0f, 0.0f));
-    normals.push_back(Vector3(1.0f, 0.0f, 0.0f));
-
-    for (size_t i = 0; i < positions.size(); i++)
-    {
-        Vertex3D vertex;
-        vertex.position = positions[i];
-        vertex.color = colors[i];
-        vertex.normal = normals[i];
-        vertices.push_back(vertex);
-    }
-
-    vector<uint16_t> index = {
-        0,  1,  2,  0,  2,  3,  // À­¸é
-        4,  5,  6,  4,  6,  7,  // ¾Æ·§¸é
-        8,  9,  10, 8,  10, 11, // ¾Õ¸é
-        12, 13, 14, 12, 14, 15, // µÞ¸é
-        16, 17, 18, 16, 18, 19, // ¿ÞÂÊ
-        20, 21, 22, 20, 22, 23  // ¿À¸¥ÂÊ
-    };
-
-    for (size_t i = 0; i < index.size(); i++)
-        indices.push_back(index[i]);
-}
-
 ExampleApp::ExampleApp()
     : Appbase()
     , m_indexCount2D(0)
+    , m_indexCount3D(0)
+    , m_indexCountGrid(0)
 {
     Image image;
 
@@ -155,7 +19,7 @@ ExampleApp::ExampleApp()
     m_images.push_back(image);
 
     m_model = std::make_unique<Model>();
-    MakeBox(m_model->vertices, m_model->indices);
+    m_model->MakeBox();
     //m_circle = std::make_unique<Circle>(Circle({ 0.0f, 0.0f }, 150.0f, { 0.0f, 1.0f, 1.0f, 1.0f }));
     //m_raytracer = std::make_unique<Raytracer>(m_width, m_height);
 }
@@ -177,23 +41,7 @@ bool ExampleApp::Initialize()
     //////////////////////////
     // create sampler state //
     //////////////////////////
-    D3D11_SAMPLER_DESC samplerDesc;
-    ZeroMemory(&samplerDesc, sizeof(samplerDesc));
-    samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT; // D3D11_FILTER_MIN_MAG_MIP_LINEAR
-    samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
-    samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
-    samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
-    samplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
-    samplerDesc.MinLOD = 0;
-    samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
-
-    hr = m_device->CreateSamplerState(&samplerDesc, m_samplerState.GetAddressOf());
-
-    if (FAILED(hr))
-    {
-        std::cout << "Failed: CreateSamplerState()" << std::endl;
-        return false;
-    }
+    Appbase::CreateSamplerState(m_samplerState);
 
     ////////////////////
     // create texture //
@@ -309,227 +157,40 @@ bool ExampleApp::Initialize()
     //////////////////////
     // create 2D object //
     //////////////////////
-    // vertices
+    const std::vector<Vertex2D> vertices =
     {
-        const std::vector<Vertex2D> vertices =
-        {
-            { { -1.0f, -1.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f } },
-            { { -1.0f,  1.0f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f }, { 0.0f, 0.0f } },
-            { {  1.0f,  1.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f }, { 1.0f, 0.0f } },
-            { {  1.0f, -1.0f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f }, { 1.0f, 1.0f } },
-        };
+        { { -1.0f, -1.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f } },
+        { { -1.0f,  1.0f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f }, { 0.0f, 0.0f } },
+        { {  1.0f,  1.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f }, { 1.0f, 0.0f } },
+        { {  1.0f, -1.0f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f }, { 1.0f, 1.0f } },
+    };
+    Appbase::CreateVertexBuffer(m_vertexBuffer2D, vertices);
 
-        D3D11_BUFFER_DESC bufferDesc;
-        bufferDesc.Usage = D3D11_USAGE_DYNAMIC;                // write access access by CPU and GPU
-        bufferDesc.ByteWidth = UINT(sizeof(Vertex2D) * vertices.size());             // size is the VERTEX struct * 3
-        bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;       // use as a vertex buffer
-        bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;    // allow CPU to write in buffer
-        bufferDesc.MiscFlags = 0;
-        bufferDesc.StructureByteStride = sizeof(Vertex2D);
-
-        D3D11_SUBRESOURCE_DATA vertexBufferData = { 0, };
-        vertexBufferData.pSysMem = vertices.data();
-        vertexBufferData.SysMemPitch = 0;
-        vertexBufferData.SysMemSlicePitch = 0;
-
-        const HRESULT hr = m_device->CreateBuffer(&bufferDesc, &vertexBufferData, m_vertexBuffer2D.GetAddressOf());
-
-        if (FAILED(hr)) {
-            std::cout << "Failed: CreateBuffer()_Vertex2D" << std::endl;
-            return false;
-        }
-    }
-
-    // indices
+    const std::vector<uint16_t> indices =
     {
-        const std::vector<uint16_t> indices =
-        {
-            0, 1, 2,
-            0, 2, 3,
-        };
+        0, 1, 2,
+        0, 2, 3,
+    };
+    Appbase::CreateIndexBuffer(m_indexBuffer2D, indices);
+    m_indexCount2D = indices.size();
 
-        m_indexCount2D = indices.size();
-
-        D3D11_BUFFER_DESC bufferDesc;
-        ZeroMemory(&bufferDesc, sizeof(bufferDesc));
-        bufferDesc.Usage = D3D11_USAGE_DYNAMIC;                // write access access by CPU and GPU
-        bufferDesc.ByteWidth = UINT(sizeof(uint16_t) * indices.size());
-        bufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;        // use as a index buffer
-        bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;    // allow CPU to write in buffer
-        bufferDesc.MiscFlags = 0;
-        bufferDesc.StructureByteStride = sizeof(uint16_t);
-
-        D3D11_SUBRESOURCE_DATA indexBufferData = { 0 };
-        indexBufferData.pSysMem = indices.data();
-        indexBufferData.SysMemPitch = 0;
-        indexBufferData.SysMemSlicePitch = 0;
-
-        const HRESULT hr = m_device->CreateBuffer(&bufferDesc, &indexBufferData, m_indexBuffer2D.GetAddressOf());
-
-        if (FAILED(hr)) {
-            std::cout << "Failed: CreateBuffer()_Index2D" << std::endl;
-            return false;
-        };
-    }
+    Appbase::CreateConstantBuffer(m_pixelConstantBuffer2D, m_pixelConstantBufferData2D);
 
     //////////////////////
     // create 3D object //
     //////////////////////
-    // vertices
-    {
-        D3D11_BUFFER_DESC bufferDesc;
-        ZeroMemory(&bufferDesc, sizeof(bufferDesc));
-        bufferDesc.Usage = D3D11_USAGE_DYNAMIC;                // write access access by CPU and GPU
-        bufferDesc.ByteWidth = UINT(sizeof(Vertex3D) * m_model->vertices.size());             // size is the VERTEX struct * 3
-        bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;       // use as a vertex buffer
-        bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;    // allow CPU to write in buffer
-        bufferDesc.MiscFlags = 0;
-        bufferDesc.StructureByteStride = sizeof(Vertex3D);
-
-        D3D11_SUBRESOURCE_DATA vertexBufferData = { 0, };
-        vertexBufferData.pSysMem = m_model->vertices.data();
-        vertexBufferData.SysMemPitch = 0;
-        vertexBufferData.SysMemSlicePitch = 0;
-
-        const HRESULT hr = m_device->CreateBuffer(&bufferDesc, &vertexBufferData, m_vertexBuffer3D.GetAddressOf());
-
-        if (FAILED(hr)) {
-            std::cout << "Failed: CreateBuffer()_Vertex3D" << std::endl;
-            return false;
-        };
-    }
-
-    // indices
-    {
-        m_indexCount3D = m_model->indices.size();
-
-        D3D11_BUFFER_DESC bufferDesc;
-        ZeroMemory(&bufferDesc, sizeof(bufferDesc));
-        bufferDesc.Usage = D3D11_USAGE_DYNAMIC;                // write access access by CPU and GPU
-        bufferDesc.ByteWidth = UINT(sizeof(uint16_t) * m_model->indices.size());
-        bufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;        // use as a index buffer
-        bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;    // allow CPU to write in buffer
-        bufferDesc.MiscFlags = 0;
-        bufferDesc.StructureByteStride = sizeof(uint16_t);
-
-        D3D11_SUBRESOURCE_DATA indexBufferData = { 0, };
-        indexBufferData.pSysMem = m_model->indices.data();
-        indexBufferData.SysMemPitch = 0;
-        indexBufferData.SysMemSlicePitch = 0;
-
-        const HRESULT hr = m_device->CreateBuffer(&bufferDesc, &indexBufferData, m_indexBuffer3D.GetAddressOf());
-
-        if (FAILED(hr)) {
-            std::cout << "Failed: CreateBuffer()_Index3D" << std::endl;
-            return false;
-        };
-    }
+    Appbase::CreateVertexBuffer(m_vertexBuffer3D, m_model->GetVertices());
+    Appbase::CreateIndexBuffer(m_indexBuffer3D, m_model->GetIndices());
+    m_indexCount3D = m_model->GetIndices().size();
     
-    ///////////////////////////////////
-    // create vertex constant buffer //
-    ///////////////////////////////////
-    {
-        D3D11_BUFFER_DESC bufferDesc;
-        ZeroMemory(&bufferDesc, sizeof(bufferDesc));
-        bufferDesc.Usage = D3D11_USAGE_DYNAMIC;                // write access access by CPU and GPU
-        bufferDesc.ByteWidth = sizeof(VSConstantBufferData);
-        bufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;     // use as a constant buffer
-        bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;    // allow CPU to write in buffer
-        bufferDesc.MiscFlags = 0;
-        bufferDesc.StructureByteStride = 0;
+    Appbase::CreateConstantBuffer(m_vertexConstantBuffer, m_vertexConstantBufferData);
+    Appbase::CreateConstantBuffer(m_pixelConstantBuffer, m_pixelConstantBufferData);
 
-        D3D11_SUBRESOURCE_DATA constantBufferData = { 0 };
-        constantBufferData.pSysMem = &m_vertexConstantBufferData;
-        constantBufferData.SysMemPitch = 0;
-        constantBufferData.SysMemSlicePitch = 0;
-
-        hr = m_device->CreateBuffer(&bufferDesc, &constantBufferData, m_vertexConstantBuffer.GetAddressOf());
-
-        if (FAILED(hr)) {
-            std::cout << "Failed: CreateBuffer()_VSConstant" << std::endl;
-            return false;
-        };
-    }
-
-    //////////////////////////////////
-    // create pixel constant buffer //
-    //////////////////////////////////
-    {
-        D3D11_BUFFER_DESC bufferDesc;
-        ZeroMemory(&bufferDesc, sizeof(bufferDesc));
-        bufferDesc.Usage = D3D11_USAGE_DYNAMIC;                // write access access by CPU and GPU
-        bufferDesc.ByteWidth = sizeof(PSConstantBufferData);
-        bufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;     // use as a constant buffer
-        bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;    // allow CPU to write in buffer
-        bufferDesc.MiscFlags = 0;
-        bufferDesc.StructureByteStride = 0;
-
-        D3D11_SUBRESOURCE_DATA constantBufferData = { 0 };
-        constantBufferData.pSysMem = &m_pixelConstantBufferData;
-        constantBufferData.SysMemPitch = 0;
-        constantBufferData.SysMemSlicePitch = 0;
-
-        hr = m_device->CreateBuffer(&bufferDesc, &constantBufferData, m_pixelConstantBuffer.GetAddressOf());
-
-        if (FAILED(hr)) {
-            std::cout << "Failed: CreateBuffer()_PSConstant" << std::endl;
-            return false;
-        };
-    }
-
-    ////////////////////////////////////
-    // create pixel constant buffer2D //
-    ////////////////////////////////////
-    {
-        D3D11_BUFFER_DESC bufferDesc;
-        ZeroMemory(&bufferDesc, sizeof(bufferDesc));
-        bufferDesc.Usage = D3D11_USAGE_DYNAMIC;                // write access access by CPU and GPU
-        bufferDesc.ByteWidth = sizeof(PSConstantBufferData2D);
-        bufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;     // use as a constant buffer
-        bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;    // allow CPU to write in buffer
-        bufferDesc.MiscFlags = 0;
-        bufferDesc.StructureByteStride = 0;
-
-        D3D11_SUBRESOURCE_DATA constantBufferData = { 0 };
-        constantBufferData.pSysMem = &m_pixelConstantBufferData2D;
-        constantBufferData.SysMemPitch = 0;
-        constantBufferData.SysMemSlicePitch = 0;
-
-        hr = m_device->CreateBuffer(&bufferDesc, &constantBufferData, m_pixelConstantBuffer2D.GetAddressOf());
-
-        if (FAILED(hr)) {
-            std::cout << "Failed: CreateBuffer()_PSConstant2D" << std::endl;
-            return false;
-        };
-    }
-
-    ////////////////////////
-    // create grid buffer //
-    ////////////////////////
-    {
-        D3D11_BUFFER_DESC bufferDesc;
-        ZeroMemory(&bufferDesc, sizeof(bufferDesc));
-        bufferDesc.Usage = D3D11_USAGE_DYNAMIC;                // write access access by CPU and GPU
-        bufferDesc.ByteWidth = UINT(sizeof(Vector3) * m_grid.size());
-        bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;       // use as a vertex buffer
-        bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;    // allow CPU to write in buffer
-        bufferDesc.MiscFlags = 0;
-        bufferDesc.StructureByteStride = sizeof(Vector3);
-
-        D3D11_SUBRESOURCE_DATA vertexBufferData = { 0, };
-        vertexBufferData.pSysMem = m_grid.data();
-        vertexBufferData.SysMemPitch = 0;
-        vertexBufferData.SysMemSlicePitch = 0;
-
-        const HRESULT hr = m_device->CreateBuffer(&bufferDesc, &vertexBufferData, m_vertexBufferGrid.GetAddressOf());
-
-        if (FAILED(hr)) {
-            std::cout << "Failed: CreateBuffer()_VertexGrid" << std::endl;
-            return false;
-        };
-
-        m_indexCountGrid = m_grid.size();
-    }
+    /////////////////
+    // create grid //
+    /////////////////
+    Appbase::CreateVertexBuffer(m_vertexBufferGrid, m_grid);
+    m_indexCountGrid = m_grid.size();
 
     return true;
 }
@@ -651,7 +312,7 @@ void ExampleApp::Update()
             else if (m_isDragging)
             {
                 // µå·¡±× ½ÃÀÛ ÀÌÈÄ ÁøÀÔÇÏ´Â Á¶°Ç¹®
-                glm::vec2 translation = m_curMousePos - m_prevMousePos;
+                Vector2 translation = m_curMousePos - m_prevMousePos;
                 translation /= 100.0f;
                 translation.x *= m_viewRotateDirection;
 
@@ -762,20 +423,19 @@ void ExampleApp::Render()
 
         if (m_textureOn == true)
         {
-            //ID3D11ShaderResourceView* ary[2] = { m_imageSRV0.Get(), m_imageSRV1.Get() };
-            m_context->PSSetShaderResources(0, m_imageSRVs.size(), m_imageSRVs[0].GetAddressOf());
+            m_context->PSSetShaderResources(0, (UINT)m_imageSRVs.size(), m_imageSRVs[0].GetAddressOf());
         }
         else
         {
-            std::vector<ID3D11ShaderResourceView*> nullSRV(m_imageSRVs.size(), nullptr);
-            m_context->PSSetShaderResources(0, nullSRV.size(), nullSRV.data());
+            std::vector<ID3D11ShaderResourceView*> nullSRV((UINT)m_imageSRVs.size(), nullptr);
+            m_context->PSSetShaderResources(0, (UINT)nullSRV.size(), nullSRV.data());
             m_context->PSSetShaderResources(0, 1, m_canvasSRV.GetAddressOf());
         }
 
         m_context->PSSetConstantBuffers(0, 1, m_pixelConstantBuffer2D.GetAddressOf());
         m_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-        m_context->DrawIndexed(m_indexCount2D, 0, 0);
+        m_context->DrawIndexed((UINT)m_indexCount2D, 0, 0);
     }
     else if (m_dimension == 3)
     {
@@ -791,14 +451,14 @@ void ExampleApp::Render()
         m_context->PSSetSamplers(0, 1, m_samplerState.GetAddressOf());
 
         std::vector<ID3D11ShaderResourceView*> nullSRV(m_imageSRVs.size(), nullptr);
-        m_context->PSSetShaderResources(0, nullSRV.size(), nullSRV.data());
+        m_context->PSSetShaderResources(0, (UINT)nullSRV.size(), nullSRV.data());
         m_context->PSSetShaderResources(0, 1, m_canvasSRV.GetAddressOf());
 
         m_context->VSSetConstantBuffers(0, 1, m_vertexConstantBuffer.GetAddressOf());
         m_context->PSSetConstantBuffers(0, 1, m_pixelConstantBuffer.GetAddressOf());
         m_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-        m_context->DrawIndexed(m_indexCount3D, 0, 0);
+        m_context->DrawIndexed((UINT)m_indexCount3D, 0, 0);
 
         if (m_drawNormal)
         {
@@ -818,7 +478,7 @@ void ExampleApp::Render()
         m_context->IASetVertexBuffers(0, 1, m_vertexBufferGrid.GetAddressOf(), &stride, &offset);
         m_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
 
-        m_context->Draw(m_indexCountGrid, 0);
+        m_context->Draw((UINT)m_indexCountGrid, 0);
 
         m_context->GSSetShader(nullptr, 0, 0);
     }

@@ -32,11 +32,12 @@ public:
     virtual ~Appbase();	
 
     bool Initialize();
+    int Run();
+
+protected:
     bool InitMainWindow();
     bool InitApp();
     bool InitGUI();
-
-    int Run();
 
     virtual void Update() = 0;
     virtual void Render() = 0;
@@ -44,6 +45,10 @@ public:
 
     virtual void KeyControl(int keyPressed) = 0;
 
+    // init
+    void CreateSamplerState(ComPtr<ID3D11SamplerState> samplerState);
+
+    // shaders handler
     void CreateVertexShaderAndInputLayout(
         const std::wstring& filename,
         ComPtr<ID3D11VertexShader>& vertexShader,
@@ -61,6 +66,53 @@ public:
         ComPtr<ID3D11GeometryShader>& geometryShader
     );
 
+    // buffers handler
+    void CreateIndexBuffer(ComPtr<ID3D11Buffer>& buffer, const std::vector<uint16_t>& indexData);
+
+    template <typename T>
+    void CreateVertexBuffer(ComPtr<ID3D11Buffer>& buffer, const std::vector<T>& vertexData)
+    {
+        D3D11_BUFFER_DESC bufferDesc;
+        ZeroMemory(&bufferDesc, sizeof(bufferDesc));
+        bufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+        bufferDesc.ByteWidth = UINT(sizeof(T) * vertexData.size());
+        bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+        bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+        bufferDesc.MiscFlags = 0;
+        bufferDesc.StructureByteStride = sizeof(T);
+
+        D3D11_SUBRESOURCE_DATA vertexBufferData = { 0, };
+        vertexBufferData.pSysMem = vertexData.data();
+        vertexBufferData.SysMemPitch = 0;
+        vertexBufferData.SysMemSlicePitch = 0;
+
+        const HRESULT hr = m_device->CreateBuffer(&bufferDesc, &vertexBufferData, buffer.GetAddressOf());
+
+        if (FAILED(hr)) {
+            std::cout << "Failed: CreateBuffer()_Vertex3D" << std::endl;
+        };
+    }
+    
+    template <typename T>
+    void CreateConstantBuffer(ComPtr<ID3D11Buffer>& buffer, const T& bufferData)
+    {
+        D3D11_BUFFER_DESC bufferDesc;
+        ZeroMemory(&bufferDesc, sizeof(bufferDesc));
+        bufferDesc.Usage = D3D11_USAGE_DYNAMIC;                // write access access by CPU and GPU
+        bufferDesc.ByteWidth = sizeof(bufferData);
+        bufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;     // use as a constant buffer
+        bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;    // allow CPU to write in buffer
+        bufferDesc.MiscFlags = 0;
+        bufferDesc.StructureByteStride = 0;
+
+        D3D11_SUBRESOURCE_DATA constantBufferData = { 0 };
+        constantBufferData.pSysMem = &bufferData;
+        constantBufferData.SysMemPitch = 0;
+        constantBufferData.SysMemSlicePitch = 0;
+
+        const HRESULT hr = m_device->CreateBuffer(&bufferDesc, &constantBufferData, buffer.GetAddressOf());
+    }
+
     template <typename T>
     void UpdateBuffer(ComPtr<ID3D11Buffer>& buffer, const T& bufferData)
     {
@@ -76,6 +128,7 @@ public:
 public:
     HWND m_hWnd;
 
+protected:
     int m_width, m_height;
     FLOAT m_initColor[4] = { 0.25f, 0.25f, 0.25f, 1.0f };
 
@@ -120,7 +173,7 @@ public:
     // mouse
     int m_mousePosX;
     int m_mousePosY;
-    glm::vec2 GetMousePos();
+    Vector2 GetMousePos();
     void SetMousePos(int posX, int posY);
 
     // // click
@@ -137,4 +190,5 @@ public:
     // keyboard
     bool m_key[256] = { false };
 };
+
 

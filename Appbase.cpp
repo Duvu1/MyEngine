@@ -399,6 +399,26 @@ int Appbase::Run()
     return 0;
 }
 
+void Appbase::CreateSamplerState(ComPtr<ID3D11SamplerState> samplerState)
+{
+    D3D11_SAMPLER_DESC samplerDesc;
+    ZeroMemory(&samplerDesc, sizeof(samplerDesc));
+    samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT; // D3D11_FILTER_MIN_MAG_MIP_LINEAR
+    samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+    samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+    samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+    samplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+    samplerDesc.MinLOD = 0;
+    samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
+
+    HRESULT hr = m_device->CreateSamplerState(&samplerDesc, samplerState.GetAddressOf());
+
+    if (FAILED(hr))
+    {
+        std::cout << "Failed: CreateSamplerState()" << std::endl;
+    }
+}
+
 void Appbase::CreateVertexShaderAndInputLayout(const std::wstring &filename, ComPtr<ID3D11VertexShader>& vertexShader,
     const vector<D3D11_INPUT_ELEMENT_DESC> &inputElement, ComPtr<ID3D11InputLayout> &inputLayout)
 {
@@ -414,7 +434,7 @@ void Appbase::CreateVertexShaderAndInputLayout(const std::wstring &filename, Com
 
     hr = D3DCompileFromFile(filename.c_str(), 0, 0, "main", "vs_5_0", compileFlags, 0, shaderBlob.GetAddressOf(), errorBlob.GetAddressOf());
     hr = m_device->CreateVertexShader(shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize(), NULL, vertexShader.GetAddressOf());
-    hr = m_device->CreateInputLayout(inputElement.data(), inputElement.size(), shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize(), inputLayout.GetAddressOf());
+    hr = m_device->CreateInputLayout(inputElement.data(), (UINT)inputElement.size(), shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize(), inputLayout.GetAddressOf());
 }
 
 void Appbase::CreatePixelShader(const std::wstring &filename, ComPtr<ID3D11PixelShader> &pixelShader)
@@ -449,6 +469,29 @@ void Appbase::CreateGeometryShader(const std::wstring& filename, ComPtr<ID3D11Ge
     hr = m_device->CreateGeometryShader(shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize(), NULL, geometryShader.GetAddressOf());
 }
 
+void Appbase::CreateIndexBuffer(ComPtr<ID3D11Buffer>& buffer, const std::vector<uint16_t>& indexData)
+{
+    D3D11_BUFFER_DESC bufferDesc;
+    ZeroMemory(&bufferDesc, sizeof(bufferDesc));
+    bufferDesc.Usage = D3D11_USAGE_DYNAMIC;                // write access access by CPU and GPU
+    bufferDesc.ByteWidth = UINT(sizeof(uint16_t) * indexData.size());
+    bufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;        // use as a index buffer
+    bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;    // allow CPU to write in buffer
+    bufferDesc.MiscFlags = 0;
+    bufferDesc.StructureByteStride = sizeof(uint16_t);
+
+    D3D11_SUBRESOURCE_DATA indexBufferData = { 0, };
+    indexBufferData.pSysMem = indexData.data();
+    indexBufferData.SysMemPitch = 0;
+    indexBufferData.SysMemSlicePitch = 0;
+
+    const HRESULT hr = m_device->CreateBuffer(&bufferDesc, &indexBufferData, buffer.GetAddressOf());
+
+    if (FAILED(hr)) {
+        std::cout << "Failed: CreateBuffer()_Index3D" << std::endl;
+    };
+}
+
 void Appbase::SetMousePos(int posX, int posY)
 {
     int clampPosX = posX;
@@ -468,7 +511,7 @@ void Appbase::SetMousePos(int posX, int posY)
     m_mousePosY = -(clampPosY - m_height / 2);
 }
 
-glm::vec2 Appbase::GetMousePos()
+Vector2 Appbase::GetMousePos()
 {
-    return glm::vec2(m_mousePosX, m_mousePosY);
+    return Vector2(m_mousePosX, m_mousePosY);
 }
