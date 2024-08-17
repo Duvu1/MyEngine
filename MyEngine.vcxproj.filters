@@ -63,6 +63,9 @@
     <ClInclude Include="Model.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="MakeMesh.cpp">
+      <Filter>소스 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MyEngine.cpp">
@@ -107,5 +110,6 @@
     <FxCompile Include="GSGrid.hlsl" />
     <FxCompile Include="VSGrid.hlsl" />
     <FxCompile Include="PSGrid.hlsl" />
+    <FxCompile Include="GS3D.hlsl" />
   </ItemGroup>
 </Project>

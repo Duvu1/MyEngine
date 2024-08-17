@@ -26,11 +26,7 @@ struct VSConstantBufferData
 
 struct NormalConstantBufferData
 {
-    Matrix model = Matrix();
-    Matrix inverseTranspose = Matrix();
-    Matrix view = Matrix();
-    Matrix projection = Matrix();
-    float scale;
+    float scale = 0.5;
     float dummy[3];
 };
 
@@ -38,6 +34,11 @@ struct PSConstantBufferData
 {
     Vector3 eyePosition;
     float dummy;
+};
+
+struct FocusConstantBufferData
+{
+    Matrix scale = Matrix();
 };
 
 struct PSConstantBufferData2D
@@ -66,8 +67,8 @@ private:
 private:
     int m_dimension = 3;
     bool m_textureOn = false;
-    bool m_drawNormal = false;
-    float m_normalScale = 1.0f;
+    bool m_drawNormal = true;
+    bool m_drawWireframe = false;
     APP_STATE m_appState = APP_STATE::HOME;
 
     std::unique_ptr<Raytracer> m_raytracer;
@@ -81,13 +82,18 @@ private:
     ComPtr<ID3D11Buffer> m_indexBuffer3D;
     size_t m_indexCount3D;
 
+    ComPtr<ID3D11Buffer> m_vertexBufferNormal3D;
+    ComPtr<ID3D11Buffer> m_indexBufferNormal3D;
+    size_t m_indexCountNormal3D;
+
     ComPtr<ID3D11Buffer> m_vertexBufferGrid;
     size_t m_indexCountGrid;
 
     ComPtr<ID3D11Buffer> m_vertexConstantBuffer;
-    ComPtr<ID3D11Buffer> m_normalVertexConstantBuffer;
     ComPtr<ID3D11Buffer> m_pixelConstantBuffer;
+    ComPtr<ID3D11Buffer> m_normalVertexConstantBuffer;
     ComPtr<ID3D11Buffer> m_geometryConstantBuffer;
+    ComPtr<ID3D11Buffer> m_focusConstantBuffer;
 
     ComPtr<ID3D11Buffer> m_pixelConstantBuffer2D;
 
@@ -120,11 +126,12 @@ private:
     std::vector<ComPtr<ID3D11Texture2D>> m_imageTextures;
 
     // constant buffer data
-    PSConstantBufferData2D m_pixelConstantBufferData2D;
-
     VSConstantBufferData m_vertexConstantBufferData;
-    NormalConstantBufferData m_normalVertexConstantBufferData;
     PSConstantBufferData m_pixelConstantBufferData;
+    NormalConstantBufferData m_normalVertexConstantBufferData;
+    FocusConstantBufferData m_focusConstantBufferData;
+
+    PSConstantBufferData2D m_pixelConstantBufferData2D;
 
     // objects
     std::vector<Vector3> m_grid =
@@ -135,7 +142,7 @@ private:
     };
     std::unique_ptr<Circle> m_circle;
     std::unique_ptr<Square> m_square;
-    std::unique_ptr<Model> m_model;
+    std::vector<std::shared_ptr<Model>> m_models;
 
     // mouse
     Vector2 m_prevMousePos = { 0, 0 };

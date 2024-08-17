@@ -13,7 +13,7 @@ struct GSInput
 
 struct GSOutput
 {
-    float4 position : SV_Position;
+    float4 position : SV_POSITION;
     float4 color : COLOR;
     float threshold : BLENDWEIGHT;
     //uint primitiveID : SV_PrimitiveID;
@@ -38,7 +38,6 @@ void main(point GSInput input[1], //uint primitiveID : SV_PrimitiveID,
         
         output.position = mul(output.position, view);
         output.position = mul(output.position, projection);
-        
 
         outputStream.Append(output);
     }

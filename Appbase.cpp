@@ -162,32 +162,12 @@ bool Appbase::InitApp()
     //////////////////////////
     // create render target //
     //////////////////////////
-    m_swapChain->GetBuffer(0, IID_PPV_ARGS(m_backBuffer.GetAddressOf()));
-
-    hr = m_device->CreateRenderTargetView(
-        m_backBuffer.Get(),
-        NULL,
-        m_baseRTV.GetAddressOf()
-    );
-
-    if (FAILED(hr))
-    {
-        cout << "Failed: CreateRenderTargetView()" << endl;
-        return false;
-    }
+    CreateRenderTargetView();
 
     //////////////////
     // set viewport //
     //////////////////
-    ZeroMemory(&m_viewport, sizeof(m_viewport));
-    m_viewport.Width = (FLOAT)m_width;
-    m_viewport.Height = (FLOAT)m_height;
-    m_viewport.MinDepth = 0.0f;
-    m_viewport.MaxDepth = 1.0f;
-    m_viewport.TopLeftX = 0;
-    m_viewport.TopLeftY = 0;
-
-    m_context->RSSetViewports(1, &m_viewport);
+    SetViewport();
 
     /////////////////////////////
     // create rasterizer state // 
@@ -207,38 +187,21 @@ bool Appbase::InitApp()
         return false;
     }
 
+    // to draw wireframe
+    rasterizerDesc.FillMode = D3D11_FILL_WIREFRAME;
+
+    hr = m_device->CreateRasterizerState(&rasterizerDesc, m_rasterizerStateWireframe.GetAddressOf());
+
+    if (FAILED(hr))
+    {
+        cout << "Failed: CreateRasterizerState()" << endl;
+        return false;
+    }
+
     /////////////////////////
     // create depth buffer // depth 값을 저장하는 버퍼
     /////////////////////////
-    D3D11_TEXTURE2D_DESC depthStencilBufferDesc; // buffer desc가 아니느 texture2d desc 사용
-    ZeroMemory(&depthStencilBufferDesc, sizeof(depthStencilBufferDesc));
-    depthStencilBufferDesc.Width = m_width;
-    depthStencilBufferDesc.Height = m_height;
-    depthStencilBufferDesc.MipLevels = 1;
-    depthStencilBufferDesc.ArraySize = 1;
-    depthStencilBufferDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT; // depth 24bits, stencil 8bits
-    depthStencilBufferDesc.SampleDesc.Count = 1;
-    depthStencilBufferDesc.SampleDesc.Quality = 0;
-    depthStencilBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-    depthStencilBufferDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
-    depthStencilBufferDesc.CPUAccessFlags = 0;
-    depthStencilBufferDesc.MiscFlags = 0;
-
-    hr = m_device->CreateTexture2D(&depthStencilBufferDesc, 0, m_depthStencilBuffer.GetAddressOf());
-    
-    if (FAILED(hr))
-    {
-        cout << "Failed: CreateTexture2D() while creating depth stencil buffer" << endl;
-        return false;
-    }
-
-    hr = m_device->CreateDepthStencilView(m_depthStencilBuffer.Get(), 0, m_depthStencilView.GetAddressOf());
-    
-    if (FAILED(hr))
-    {
-        cout << "Failed: CreateDepthStencilView()" << endl;
-        return false;
-    }
+    CreateDepthBuffer();
 
     ////////////////////////////////
     // create depth stencil state //
@@ -309,6 +272,26 @@ LRESULT Appbase::MsgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         if ((wParam & 0xfff0) == SC_KEYMENU) // Disable ALT application menu 
             return 0;
         break;
+    case WM_SIZE:
+        // resize swapchain
+        if (m_swapChain)
+        {
+            m_width = int(LOWORD(lParam));
+            m_height = int(HIWORD(lParam));
+
+            m_baseRTV.Reset();
+            m_swapChain->ResizeBuffers(
+                0,
+                (UINT)LOWORD(lParam),
+                (UINT)HIWORD(lParam),
+                DXGI_FORMAT_UNKNOWN,
+                0
+            );
+
+            CreateRenderTargetView();
+            CreateDepthBuffer();
+            SetViewport();
+        }
     case WM_MOUSEMOVE:
         std::cout << "Mouse " << LOWORD(lParam) << " " << HIWORD(lParam) << std::endl;
         SetMousePos(LOWORD(lParam), HIWORD(lParam));
@@ -399,7 +382,75 @@ int Appbase::Run()
     return 0;
 }
 
-void Appbase::CreateSamplerState(ComPtr<ID3D11SamplerState> samplerState)
+bool Appbase::CreateRenderTargetView()
+{
+    ComPtr<ID3D11Texture2D> backBuffer;
+    m_swapChain->GetBuffer(0, IID_PPV_ARGS(backBuffer.GetAddressOf()));
+
+    HRESULT hr = m_device->CreateRenderTargetView(
+        backBuffer.Get(),
+        NULL,
+        m_baseRTV.GetAddressOf()
+    );
+
+    if (FAILED(hr))
+    {
+        cout << "Failed: CreateRenderTargetView()" << endl;
+        return false;
+    }
+
+    return true;
+}
+
+void Appbase::SetViewport()
+{
+    ZeroMemory(&m_viewport, sizeof(m_viewport));
+    m_viewport.Width = (FLOAT)m_width;
+    m_viewport.Height = (FLOAT)m_height;
+    m_viewport.MinDepth = 0.0f;
+    m_viewport.MaxDepth = 1.0f;
+    m_viewport.TopLeftX = 0;
+    m_viewport.TopLeftY = 0;
+
+    m_context->RSSetViewports(1, &m_viewport);
+}
+
+bool Appbase::CreateDepthBuffer()
+{
+    D3D11_TEXTURE2D_DESC depthStencilBufferDesc; // buffer desc가 아니느 texture2d desc 사용
+    ZeroMemory(&depthStencilBufferDesc, sizeof(depthStencilBufferDesc));
+    depthStencilBufferDesc.Width = m_width;
+    depthStencilBufferDesc.Height = m_height;
+    depthStencilBufferDesc.MipLevels = 1;
+    depthStencilBufferDesc.ArraySize = 1;
+    depthStencilBufferDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT; // depth 24bits, stencil 8bits
+    depthStencilBufferDesc.SampleDesc.Count = 1;
+    depthStencilBufferDesc.SampleDesc.Quality = 0;
+    depthStencilBufferDesc.Usage = D3D11_USAGE_DEFAULT;
+    depthStencilBufferDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+    depthStencilBufferDesc.CPUAccessFlags = 0;
+    depthStencilBufferDesc.MiscFlags = 0;
+
+    HRESULT hr = m_device->CreateTexture2D(&depthStencilBufferDesc, 0, m_depthStencilBuffer.GetAddressOf());
+
+    if (FAILED(hr))
+    {
+        cout << "Failed: CreateTexture2D() while creating depth stencil buffer" << endl;
+        return false;
+    }
+
+    hr = m_device->CreateDepthStencilView(m_depthStencilBuffer.Get(), 0, m_depthStencilView.GetAddressOf());
+
+    if (FAILED(hr))
+    {
+        cout << "Failed: CreateDepthStencilView()" << endl;
+        return false;
+    }
+
+    return true;
+}
+
+bool Appbase::CreateSamplerState(ComPtr<ID3D11SamplerState> samplerState)
 {
     D3D11_SAMPLER_DESC samplerDesc;
     ZeroMemory(&samplerDesc, sizeof(samplerDesc));
@@ -416,10 +467,13 @@ void Appbase::CreateSamplerState(ComPtr<ID3D11SamplerState> samplerState)
     if (FAILED(hr))
     {
         std::cout << "Failed: CreateSamplerState()" << std::endl;
+        return false;
     }
+
+    return true;
 }
 
-void Appbase::CreateVertexShaderAndInputLayout(const std::wstring &filename, ComPtr<ID3D11VertexShader>& vertexShader,
+bool Appbase::CreateVertexShaderAndInputLayout(const std::wstring &filename, ComPtr<ID3D11VertexShader>& vertexShader,
     const vector<D3D11_INPUT_ELEMENT_DESC> &inputElement, ComPtr<ID3D11InputLayout> &inputLayout)
 {
     HRESULT hr = S_OK;
@@ -433,11 +487,33 @@ void Appbase::CreateVertexShaderAndInputLayout(const std::wstring &filename, Com
 #endif
 
     hr = D3DCompileFromFile(filename.c_str(), 0, 0, "main", "vs_5_0", compileFlags, 0, shaderBlob.GetAddressOf(), errorBlob.GetAddressOf());
+
+    if (FAILED(hr))
+    {
+        std::cout << "Failed: D3DCompileFromFile()" << std::endl;
+        return false;
+    }
+
     hr = m_device->CreateVertexShader(shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize(), NULL, vertexShader.GetAddressOf());
+    
+    if (FAILED(hr))
+    {
+        std::cout << "Failed: CreateVertexShader()" << std::endl;
+        return false;
+    }
+
     hr = m_device->CreateInputLayout(inputElement.data(), (UINT)inputElement.size(), shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize(), inputLayout.GetAddressOf());
+
+    if (FAILED(hr))
+    {
+        std::cout << "Failed: CreateInputLayout()" << std::endl;
+        return false;
+    }
+
+    return true;
 }
 
-void Appbase::CreatePixelShader(const std::wstring &filename, ComPtr<ID3D11PixelShader> &pixelShader)
+bool Appbase::CreatePixelShader(const std::wstring &filename, ComPtr<ID3D11PixelShader> &pixelShader)
 {
     HRESULT hr = S_OK;
 
@@ -450,10 +526,25 @@ void Appbase::CreatePixelShader(const std::wstring &filename, ComPtr<ID3D11Pixel
 #endif
 
     hr = D3DCompileFromFile(filename.c_str(), 0, 0, "main", "ps_5_0", compileFlags, 0, shaderBlob.GetAddressOf(), errorBlob.GetAddressOf());
+
+    if (FAILED(hr))
+    {
+        std::cout << "Failed: D3DCompileFromFile()" << std::endl;
+        return false;
+    }
+
     hr = m_device->CreatePixelShader(shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize(), NULL, pixelShader.GetAddressOf());
+
+    if (FAILED(hr))
+    {
+        std::cout << "Failed: CreatePixelShader()" << std::endl;
+        return false;
+    }
+
+    return true;
 }
 
-void Appbase::CreateGeometryShader(const std::wstring& filename, ComPtr<ID3D11GeometryShader>& geometryShader)
+bool Appbase::CreateGeometryShader(const std::wstring& filename, ComPtr<ID3D11GeometryShader>& geometryShader)
 {
     HRESULT hr = S_OK;
 
@@ -466,10 +557,25 @@ void Appbase::CreateGeometryShader(const std::wstring& filename, ComPtr<ID3D11Ge
 #endif
 
     hr = D3DCompileFromFile(filename.c_str(), 0, 0, "main", "gs_5_0", compileFlags, 0, shaderBlob.GetAddressOf(), errorBlob.GetAddressOf());
+
+    if (FAILED(hr))
+    {
+        std::cout << "Failed: D3DCompileFromFile()" << std::endl;
+        return false;
+    }
+
     hr = m_device->CreateGeometryShader(shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize(), NULL, geometryShader.GetAddressOf());
+
+    if (FAILED(hr))
+    {
+        std::cout << "Failed: CreateGeometryShader()" << std::endl;
+        return false;
+    }
+
+    return true;
 }
 
-void Appbase::CreateIndexBuffer(ComPtr<ID3D11Buffer>& buffer, const std::vector<uint16_t>& indexData)
+bool Appbase::CreateIndexBuffer(ComPtr<ID3D11Buffer>& buffer, const std::vector<uint16_t>& indexData)
 {
     D3D11_BUFFER_DESC bufferDesc;
     ZeroMemory(&bufferDesc, sizeof(bufferDesc));
@@ -485,11 +591,14 @@ void Appbase::CreateIndexBuffer(ComPtr<ID3D11Buffer>& buffer, const std::vector<
     indexBufferData.SysMemPitch = 0;
     indexBufferData.SysMemSlicePitch = 0;
 
-    const HRESULT hr = m_device->CreateBuffer(&bufferDesc, &indexBufferData, buffer.GetAddressOf());
+    HRESULT hr = m_device->CreateBuffer(&bufferDesc, &indexBufferData, buffer.GetAddressOf());
 
     if (FAILED(hr)) {
-        std::cout << "Failed: CreateBuffer()_Index3D" << std::endl;
+        std::cout << "Failed: CreateIndexBuffer()" << std::endl;
+        return false;
     };
+
+    return true;
 }
 
 void Appbase::SetMousePos(int posX, int posY)

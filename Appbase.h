@@ -19,8 +19,8 @@ struct Vertex2D
 struct Vertex3D
 {
     Vector3 position;
-    Vector3 color;
     Vector3 normal;
+    Vector2 texcoord;
 };
 
 class Appbase
@@ -46,38 +46,41 @@ protected:
     virtual void KeyControl(int keyPressed) = 0;
 
     // init
-    void CreateSamplerState(ComPtr<ID3D11SamplerState> samplerState);
+    bool CreateRenderTargetView();
+    void SetViewport();
+    bool CreateDepthBuffer();
+    bool CreateSamplerState(ComPtr<ID3D11SamplerState> samplerState);
 
     // shaders handler
-    void CreateVertexShaderAndInputLayout(
+    bool CreateVertexShaderAndInputLayout(
         const std::wstring& filename,
         ComPtr<ID3D11VertexShader>& vertexShader,
         const std::vector<D3D11_INPUT_ELEMENT_DESC>& inputElement,
         ComPtr<ID3D11InputLayout>& inputLayout
     );
 
-    void CreatePixelShader(
+    bool CreatePixelShader(
         const std::wstring& filename,
         ComPtr<ID3D11PixelShader>& pixelShader
     );
 
-    void CreateGeometryShader(
+    bool CreateGeometryShader(
         const std::wstring& filename,
         ComPtr<ID3D11GeometryShader>& geometryShader
     );
 
     // buffers handler
-    void CreateIndexBuffer(ComPtr<ID3D11Buffer>& buffer, const std::vector<uint16_t>& indexData);
+    bool CreateIndexBuffer(ComPtr<ID3D11Buffer>& buffer, const std::vector<uint16_t>& indexData);
 
     template <typename T>
-    void CreateVertexBuffer(ComPtr<ID3D11Buffer>& buffer, const std::vector<T>& vertexData)
+    bool CreateVertexBuffer(ComPtr<ID3D11Buffer>& buffer, const std::vector<T>& vertexData)
     {
         D3D11_BUFFER_DESC bufferDesc;
         ZeroMemory(&bufferDesc, sizeof(bufferDesc));
-        bufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+        bufferDesc.Usage = D3D11_USAGE_IMMUTABLE;
         bufferDesc.ByteWidth = UINT(sizeof(T) * vertexData.size());
         bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-        bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+        bufferDesc.CPUAccessFlags = 0;
         bufferDesc.MiscFlags = 0;
         bufferDesc.StructureByteStride = sizeof(T);
 
@@ -86,15 +89,18 @@ protected:
         vertexBufferData.SysMemPitch = 0;
         vertexBufferData.SysMemSlicePitch = 0;
 
-        const HRESULT hr = m_device->CreateBuffer(&bufferDesc, &vertexBufferData, buffer.GetAddressOf());
+        HRESULT hr = m_device->CreateBuffer(&bufferDesc, &vertexBufferData, buffer.GetAddressOf());
 
         if (FAILED(hr)) {
-            std::cout << "Failed: CreateBuffer()_Vertex3D" << std::endl;
+            std::cout << "Failed: CreateVertexBuffer()" << std::endl;
+            return false;
         };
+
+        return true;
     }
     
     template <typename T>
-    void CreateConstantBuffer(ComPtr<ID3D11Buffer>& buffer, const T& bufferData)
+    bool CreateConstantBuffer(ComPtr<ID3D11Buffer>& buffer, const T& bufferData)
     {
         D3D11_BUFFER_DESC bufferDesc;
         ZeroMemory(&bufferDesc, sizeof(bufferDesc));
@@ -110,7 +116,14 @@ protected:
         constantBufferData.SysMemPitch = 0;
         constantBufferData.SysMemSlicePitch = 0;
 
-        const HRESULT hr = m_device->CreateBuffer(&bufferDesc, &constantBufferData, buffer.GetAddressOf());
+        HRESULT hr = m_device->CreateBuffer(&bufferDesc, &constantBufferData, buffer.GetAddressOf());
+
+        if (FAILED(hr)) {
+            std::cout << "Failed: CreateConstantBuffer()" << std::endl;
+            return false;
+        };
+
+        return true;
     }
 
     template <typename T>
@@ -137,10 +150,10 @@ protected:
     ComPtr<ID3D11DeviceContext> m_context;
 
     ComPtr<IDXGISwapChain> m_swapChain;
-    ComPtr<ID3D11Texture2D> m_backBuffer;
     ComPtr<ID3D11RenderTargetView> m_baseRTV;
     D3D11_VIEWPORT m_viewport;
     ComPtr<ID3D11RasterizerState> m_rasterizerState;
+    ComPtr<ID3D11RasterizerState> m_rasterizerStateWireframe;
 
     ComPtr<ID3D11Texture2D> m_depthStencilBuffer;
     ComPtr<ID3D11DepthStencilView> m_depthStencilView;
@@ -161,14 +174,15 @@ protected:
     ComPtr<ID3D11InputLayout> m_inputLayout3D;
     ComPtr<ID3D11VertexShader> m_vertexShader3D;
     ComPtr<ID3D11PixelShader> m_pixelShader3D;
-    ComPtr<ID3D11GeometryShader> m_geometryShaderGrid;
+
+    ComPtr<ID3D11InputLayout> m_inputLayoutNormal3D;
+    ComPtr<ID3D11VertexShader> m_vertexShaderNormal3D;
+    ComPtr<ID3D11PixelShader> m_pixelShaderNormal3D;
 
     ComPtr<ID3D11InputLayout> m_inputLayoutGrid;
     ComPtr<ID3D11VertexShader> m_vertexShaderGrid;
+    ComPtr<ID3D11GeometryShader> m_geometryShaderGrid;
     ComPtr<ID3D11PixelShader> m_pixelShaderGrid;
-
-    ComPtr<ID3D11VertexShader> m_vertexShaderNormal3D;
-    ComPtr<ID3D11PixelShader> m_pixelShaderNormal3D;
 
     // mouse
     int m_mousePosX;

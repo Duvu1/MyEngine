@@ -2,6 +2,8 @@
 
 #include <tuple>
 
+#include "MakeMesh.cpp"
+
 using namespace std;
 
 ExampleApp::ExampleApp()
@@ -18,8 +20,12 @@ ExampleApp::ExampleApp()
     image.ReadFromFile("image1.jpg");
     m_images.push_back(image);
 
-    m_model = std::make_unique<Model>();
-    m_model->MakeBox();
+    shared_ptr<Model> model = std::make_shared<Model>();
+    MakeBox(model->GetVertices(), model->GetIndices(), 1.0f);
+    MakeNormal(model->GetVertices(),
+               model->GetNormalVertices(), model->GetNormalIndices());
+    //Fuck(model->GetNormalVertices(), model->GetNormalIndices());
+    m_models.push_back(model);
     //m_circle = std::make_unique<Circle>(Circle({ 0.0f, 0.0f }, 150.0f, { 0.0f, 1.0f, 1.0f, 1.0f }));
     //m_raytracer = std::make_unique<Raytracer>(m_width, m_height);
 }
@@ -179,13 +185,26 @@ bool ExampleApp::Initialize()
     //////////////////////
     // create 3D object //
     //////////////////////
-    Appbase::CreateVertexBuffer(m_vertexBuffer3D, m_model->GetVertices());
-    Appbase::CreateIndexBuffer(m_indexBuffer3D, m_model->GetIndices());
-    m_indexCount3D = m_model->GetIndices().size();
-    
+    for (auto& model : m_models)
+    {
+        Appbase::CreateVertexBuffer(m_vertexBuffer3D, model->GetVertices());
+        Appbase::CreateIndexBuffer(m_indexBuffer3D, model->GetIndices());
+        m_indexCount3D = model->GetIndices().size();
+
+        Appbase::CreateVertexBuffer(m_vertexBufferNormal3D, model->GetNormalVertices());
+        Appbase::CreateIndexBuffer(m_indexBufferNormal3D, model->GetNormalIndices());
+        m_indexCountNormal3D = model->GetNormalIndices().size();
+    }
+
     Appbase::CreateConstantBuffer(m_vertexConstantBuffer, m_vertexConstantBufferData);
     Appbase::CreateConstantBuffer(m_pixelConstantBuffer, m_pixelConstantBufferData);
 
+    Appbase::CreateConstantBuffer(m_normalVertexConstantBuffer, m_normalVertexConstantBufferData);
+
+    Appbase::CreateConstantBuffer(m_focusConstantBuffer, m_focusConstantBufferData);
+    m_focusConstantBufferData.scale = Matrix::CreateScale(1.1f);
+    UpdateBuffer(m_focusConstantBuffer, m_focusConstantBufferData);
+    
     /////////////////
     // create grid //
     /////////////////
@@ -212,12 +231,16 @@ bool ExampleApp::InitShaders()
     vector<D3D11_INPUT_ELEMENT_DESC> inputLayout3D =
     {
         {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
-        {"COLOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0},
-        {"NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0},
+        {"NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 4 * 3, D3D11_INPUT_PER_VERTEX_DATA, 0},
+        {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 4 * 3 + 4 * 3, D3D11_INPUT_PER_VERTEX_DATA, 0},
     };
 
     CreateVertexShaderAndInputLayout(L"VS3D.hlsl", m_vertexShader3D, inputLayout3D, m_inputLayout3D);
     CreatePixelShader(L"PS3D.hlsl", m_pixelShader3D);
+
+    // normal
+    CreateVertexShaderAndInputLayout(L"NormalVS3D.hlsl", m_vertexShaderNormal3D, inputLayout3D, m_inputLayout3D);
+    CreatePixelShader(L"NormalPS3D.hlsl", m_pixelShaderNormal3D);
 
     // grid
     vector<D3D11_INPUT_ELEMENT_DESC> inputLayoutGrid =
@@ -228,26 +251,6 @@ bool ExampleApp::InitShaders()
     CreateVertexShaderAndInputLayout(L"VSGrid.hlsl", m_vertexShaderGrid, inputLayoutGrid, m_inputLayoutGrid);
     CreateGeometryShader(L"GSGrid.hlsl", m_geometryShaderGrid);
     CreatePixelShader(L"PSGrid.hlsl", m_pixelShaderGrid);
-
-    // normal
-    //if (FAILED(D3DCompileFromFile(L"NormalVS3D.hlsl", 0, 0, "main", "vs_5_0", 0, 0, &vertexBlob, &errorBlob)))
-    //{
-    //    if (errorBlob) {
-    //        std::cout << "Vertex shader compile error\n" << (char*)errorBlob->GetBufferPointer() << std::endl;
-    //    }
-    //}
-    //
-    //if (FAILED(D3DCompileFromFile(L"NormalPS3D.hlsl", 0, 0, "main", "ps_5_0", 0, 0, &pixelBlob, &errorBlob)))
-    //{
-    //    if (errorBlob) {
-    //        std::cout << "Pixel shader compile error\n" << (char*)errorBlob->GetBufferPointer() << std::endl;
-    //    }
-    //}
-    //
-    //hr = m_device->CreateVertexShader(vertexBlob->GetBufferPointer(), vertexBlob->GetBufferSize(), NULL, m_vertexShaderNormal3D.GetAddressOf());
-    //hr = m_device->CreatePixelShader(pixelBlob->GetBufferPointer(), pixelBlob->GetBufferSize(), NULL, m_pixelShaderNormal3D.GetAddressOf());
-    //
-    //m_device->CreateInputLayout(inputLayout3D, 2, vertexBlob->GetBufferPointer(), vertexBlob->GetBufferSize(), m_inputLayout3D.GetAddressOf());
 
     return true;
 }
@@ -332,11 +335,6 @@ void ExampleApp::Update()
 
         if (m_isViewMoved)
         {
-            // update vertex constant buffer
-            m_viewPos.x = m_viewDistance * cos(m_viewPosAngle.y) * sin(m_viewPosAngle.x);
-            m_viewPos.y = -m_viewDistance * sin(m_viewPosAngle.y);
-            m_viewPos.z = -m_viewDistance * cos(m_viewPosAngle.y) * cos(m_viewPosAngle.x);
-
             /////////////////////////
             // update model matrix //
             /////////////////////////
@@ -354,6 +352,10 @@ void ExampleApp::Update()
             ////////////////////////
             // update view matrix //
             ////////////////////////
+            m_viewPos.x = m_viewDistance * cos(m_viewPosAngle.y) * sin(m_viewPosAngle.x);
+            m_viewPos.y = -m_viewDistance * sin(m_viewPosAngle.y);
+            m_viewPos.z = -m_viewDistance * cos(m_viewPosAngle.y) * cos(m_viewPosAngle.x);
+
             m_vertexConstantBufferData.view = XMMatrixLookAtLH(m_viewPos, m_viewLookAt, m_viewUp);
             //m_vertexConstantBufferData.view = XMMatrixLookToLH(m_viewPos, m_viewDir, m_viewUp);
             m_vertexConstantBufferData.view = m_vertexConstantBufferData.view.Transpose();
@@ -367,7 +369,7 @@ void ExampleApp::Update()
         // update projection matrix //
         //////////////////////////////
         m_vertexConstantBufferData.projection = XMMatrixPerspectiveFovLH(
-            XMConvertToRadians(m_fieldOfViewAngle), m_aspectRatio, m_nearZ, m_farZ);
+            XMConvertToRadians(m_fieldOfViewAngle), GetAspectRatio(), m_nearZ, m_farZ);
         m_vertexConstantBufferData.projection = m_vertexConstantBufferData.projection.Transpose();
 
         UpdateBuffer(m_vertexConstantBuffer, m_vertexConstantBufferData);
@@ -376,14 +378,10 @@ void ExampleApp::Update()
         ///////////////////
         // update normal //
         ///////////////////
-        m_normalVertexConstantBufferData.model = m_vertexConstantBufferData.model;
-        m_normalVertexConstantBufferData.inverseTranspose = m_normalVertexConstantBufferData.model.Invert();
-        m_normalVertexConstantBufferData.inverseTranspose = m_normalVertexConstantBufferData.inverseTranspose.Transpose();
-        m_normalVertexConstantBufferData.view = m_vertexConstantBufferData.view;
-        m_normalVertexConstantBufferData.projection = m_vertexConstantBufferData.projection;
-        m_normalVertexConstantBufferData.scale = m_normalScale;
-
-        //UpdateBuffer(m_normalVertexConstantBuffer, m_normalVertexConstantBufferData);
+        if (m_drawNormal)
+        {
+            UpdateBuffer(m_normalVertexConstantBuffer, m_normalVertexConstantBufferData);
+        }
 
         /////////////////
         // update grid //
@@ -439,6 +437,12 @@ void ExampleApp::Render()
     }
     else if (m_dimension == 3)
     {
+        if (m_drawWireframe)
+        {
+            m_context->RSSetState(m_rasterizerStateWireframe.Get());
+        }
+            
+        // 큐브맵 그리기 -> 그리드 그리기 -> 모델 포커스 그리기 -> 모델 그리기
         m_context->IASetInputLayout(m_inputLayout3D.Get());
         m_context->VSSetShader(m_vertexShader3D.Get(), 0, 0);
         m_context->PSSetShader(m_pixelShader3D.Get(), 0, 0);
@@ -454,7 +458,12 @@ void ExampleApp::Render()
         m_context->PSSetShaderResources(0, (UINT)nullSRV.size(), nullSRV.data());
         m_context->PSSetShaderResources(0, 1, m_canvasSRV.GetAddressOf());
 
-        m_context->VSSetConstantBuffers(0, 1, m_vertexConstantBuffer.GetAddressOf());
+        vector<ComPtr<ID3D11Buffer>> vertexConstantBuffers = {
+            m_vertexConstantBuffer,
+            m_focusConstantBuffer
+        };
+
+        m_context->VSSetConstantBuffers(0, vertexConstantBuffers.size(), vertexConstantBuffers.data()->GetAddressOf());
         m_context->PSSetConstantBuffers(0, 1, m_pixelConstantBuffer.GetAddressOf());
         m_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
@@ -462,10 +471,24 @@ void ExampleApp::Render()
 
         if (m_drawNormal)
         {
+            m_context->IASetInputLayout(m_inputLayout3D.Get());
             m_context->VSSetShader(m_vertexShaderNormal3D.Get(), 0, 0);
             m_context->PSSetShader(m_pixelShaderNormal3D.Get(), 0, 0);
 
-        
+            stride = sizeof(Vertex3D);
+            offset = 0;
+            m_context->IASetVertexBuffers(0, 1, m_vertexBufferNormal3D.GetAddressOf(), &stride, &offset);
+            m_context->IASetIndexBuffer(m_indexBufferNormal3D.Get(), DXGI_FORMAT_R16_UINT, 0);
+            
+            vector<ComPtr<ID3D11Buffer>> normalVertexConstantBuffers = {
+                m_vertexConstantBuffer,
+                m_normalVertexConstantBuffer
+            };
+
+            m_context->VSSetConstantBuffers(0, normalVertexConstantBuffers.size(), normalVertexConstantBuffers.data()->GetAddressOf());
+            m_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
+
+            m_context->DrawIndexed((UINT)m_indexCountNormal3D, 0, 0);
         }
 
         m_context->IASetInputLayout(m_inputLayoutGrid.Get());
@@ -475,6 +498,7 @@ void ExampleApp::Render()
         m_context->PSSetShader(m_pixelShaderGrid.Get(), 0, 0);
 
         stride = sizeof(Vector3);
+        offset = 0;
         m_context->IASetVertexBuffers(0, 1, m_vertexBufferGrid.GetAddressOf(), &stride, &offset);
         m_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
 
@@ -506,8 +530,9 @@ void ExampleApp::UpdateGUI()
     }
     else if (m_dimension == 3)
     {
+        ImGui::Checkbox("Draw Wireframe", &m_drawWireframe);
         ImGui::Checkbox("Draw Normal", &m_drawNormal);
-        ImGui::SliderFloat("Normal Scale", &m_normalScale, 0.0, 5.0);
+        ImGui::SliderFloat("Normal Scale", &m_normalVertexConstantBufferData.scale, 0.0, 1.0);
 
         if (m_appState == APP_STATE::HOME)
         {
