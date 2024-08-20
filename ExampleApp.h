@@ -24,6 +24,11 @@ struct VSConstantBufferData
     Matrix projection = Matrix();
 };
 
+struct FocusConstantBufferData
+{
+    Matrix modelFocus = Matrix();
+};
+
 struct NormalConstantBufferData
 {
     float scale = 0.5;
@@ -34,11 +39,6 @@ struct PSConstantBufferData
 {
     Vector3 eyePosition;
     float dummy;
-};
-
-struct FocusConstantBufferData
-{
-    Matrix scale = Matrix();
 };
 
 struct PSConstantBufferData2D
@@ -78,22 +78,22 @@ private:
     ComPtr<ID3D11Buffer> m_indexBuffer2D;
     size_t m_indexCount2D;
 
-    ComPtr<ID3D11Buffer> m_vertexBuffer3D;
-    ComPtr<ID3D11Buffer> m_indexBuffer3D;
-    size_t m_indexCount3D;
+    ComPtr<ID3D11Buffer> m_vertexBuffer;
+    ComPtr<ID3D11Buffer> m_indexBuffer;
+    size_t m_indexCount;
 
-    ComPtr<ID3D11Buffer> m_vertexBufferNormal3D;
-    ComPtr<ID3D11Buffer> m_indexBufferNormal3D;
-    size_t m_indexCountNormal3D;
+    ComPtr<ID3D11Buffer> m_vertexBufferNormal;
+    ComPtr<ID3D11Buffer> m_indexBufferNormal;
+    size_t m_indexCountNormal;
 
     ComPtr<ID3D11Buffer> m_vertexBufferGrid;
     size_t m_indexCountGrid;
 
     ComPtr<ID3D11Buffer> m_vertexConstantBuffer;
     ComPtr<ID3D11Buffer> m_pixelConstantBuffer;
-    ComPtr<ID3D11Buffer> m_normalVertexConstantBuffer;
-    ComPtr<ID3D11Buffer> m_geometryConstantBuffer;
-    ComPtr<ID3D11Buffer> m_focusConstantBuffer;
+    ComPtr<ID3D11Buffer> m_vertexConstantBufferFocus;
+    ComPtr<ID3D11Buffer> m_vertexConstantBufferNormal;
+    ComPtr<ID3D11Buffer> m_geometryConstantBufferGrid;
 
     ComPtr<ID3D11Buffer> m_pixelConstantBuffer2D;
 
@@ -108,7 +108,7 @@ private:
     int m_viewRotateDirection = -1; // 보통 회전:-1, 화면 상하 반전 시 회전:1
     float m_viewDistance = 5.0f;
     
-    Vector3 m_viewPos = { 0.0f, 0.0f, -m_viewDistance };
+    Vector3 m_viewPos = { 0.5f, 0.5f, -m_viewDistance };
     Vector3 m_viewDir = { 0.0f, 0.0f, 1.0f };
     Vector3 m_viewUp = { 0.0f, 1.0f, 0.0f };
     Vector3 m_viewLookAt = { 0.0f, 0.0f, 0.0f };
@@ -128,18 +128,13 @@ private:
     // constant buffer data
     VSConstantBufferData m_vertexConstantBufferData;
     PSConstantBufferData m_pixelConstantBufferData;
-    NormalConstantBufferData m_normalVertexConstantBufferData;
-    FocusConstantBufferData m_focusConstantBufferData;
+    FocusConstantBufferData m_vertexConstantBufferDataFocus;
+    NormalConstantBufferData m_vertexConstantBufferDataNormal;
 
     PSConstantBufferData2D m_pixelConstantBufferData2D;
 
     // objects
-    std::vector<Vector3> m_grid =
-    {
-        { 1.0f, 0.0f, 0.0f },
-        { 0.0f, 1.0f, 0.0f },
-        { 0.0f, 0.0f, 1.0f }
-    };
+    std::vector<Vector3> m_grid;
     std::unique_ptr<Circle> m_circle;
     std::unique_ptr<Square> m_square;
     std::vector<std::shared_ptr<Model>> m_models;

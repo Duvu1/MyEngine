@@ -105,11 +105,13 @@
     <FxCompile Include="PS3D.hlsl" />
     <FxCompile Include="PS2D.hlsl" />
     <FxCompile Include="VS2D.hlsl" />
-    <FxCompile Include="NormalVS3D.hlsl" />
-    <FxCompile Include="NormalPS3D.hlsl" />
+    <FxCompile Include="VSNormal.hlsl" />
+    <FxCompile Include="PSNormal.hlsl" />
     <FxCompile Include="GSGrid.hlsl" />
     <FxCompile Include="VSGrid.hlsl" />
     <FxCompile Include="PSGrid.hlsl" />
     <FxCompile Include="GS3D.hlsl" />
+    <FxCompile Include="VSFocus.hlsl" />
+    <FxCompile Include="PSFocus.hlsl" />
   </ItemGroup>
 </Project>

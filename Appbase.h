@@ -143,7 +143,8 @@ public:
 
 protected:
     int m_width, m_height;
-    FLOAT m_initColor[4] = { 0.25f, 0.25f, 0.25f, 1.0f };
+    FLOAT m_initColor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+    FLOAT m_backgroundColor[4] = { 0.25f, 0.25f, 0.25f, 1.0f };
 
     // init
     ComPtr<ID3D11Device> m_device;
@@ -171,13 +172,15 @@ protected:
     ComPtr<ID3D11VertexShader> m_vertexShader2D;
     ComPtr<ID3D11PixelShader> m_pixelShader2D;
 
-    ComPtr<ID3D11InputLayout> m_inputLayout3D;
-    ComPtr<ID3D11VertexShader> m_vertexShader3D;
-    ComPtr<ID3D11PixelShader> m_pixelShader3D;
+    ComPtr<ID3D11InputLayout> m_inputLayout;
+    ComPtr<ID3D11VertexShader> m_vertexShader;
+    ComPtr<ID3D11PixelShader> m_pixelShader;
 
-    ComPtr<ID3D11InputLayout> m_inputLayoutNormal3D;
-    ComPtr<ID3D11VertexShader> m_vertexShaderNormal3D;
-    ComPtr<ID3D11PixelShader> m_pixelShaderNormal3D;
+    ComPtr<ID3D11VertexShader> m_vertexShaderFocus;
+    ComPtr<ID3D11PixelShader> m_pixelShaderFocus;
+
+    ComPtr<ID3D11VertexShader> m_vertexShaderNormal;
+    ComPtr<ID3D11PixelShader> m_pixelShaderNormal;
 
     ComPtr<ID3D11InputLayout> m_inputLayoutGrid;
     ComPtr<ID3D11VertexShader> m_vertexShaderGrid;

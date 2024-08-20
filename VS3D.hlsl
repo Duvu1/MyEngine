@@ -6,11 +6,6 @@ cbuffer MVP : register(b0)
     matrix projection;
 };
 
-cbuffer Focus : register(b1)
-{
-    matrix scale;
-}
-
 struct VSInput
 {
     float3 positionWorld : POSITION;
@@ -38,11 +33,6 @@ VSOutput main(VSInput input)
     pos = mul(pos, view);
     pos = mul(pos, projection);
     output.positionScreen = pos;
-    
-    //focusPos = mul(focusPos, scale);
-    //focusPos = mul(focusPos, view);
-    //focusPos = mul(focusPos, projection);
-    //output.focusPositionScreen = focusPos;
     
     float4 normal = float4(input.normal, 0.0);
     output.normal = mul(normal, inverseTranspose).xyz;

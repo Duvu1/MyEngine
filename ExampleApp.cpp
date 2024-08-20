@@ -9,7 +9,7 @@ using namespace std;
 ExampleApp::ExampleApp()
     : Appbase()
     , m_indexCount2D(0)
-    , m_indexCount3D(0)
+    , m_indexCount(0)
     , m_indexCountGrid(0)
 {
     Image image;
@@ -24,8 +24,15 @@ ExampleApp::ExampleApp()
     MakeBox(model->GetVertices(), model->GetIndices(), 1.0f);
     MakeNormal(model->GetVertices(),
                model->GetNormalVertices(), model->GetNormalIndices());
-    //Fuck(model->GetNormalVertices(), model->GetNormalIndices());
     m_models.push_back(model);
+
+    //shared_ptr<Model> cube = std::make_shared<Model>();
+    //MakeBox(cube->GetVertices(), cube->GetIndices(), 10.0f);
+    //m_models.push_back(cube);
+
+    //shared_ptr<Model> sphere = std::make_shared<Model>();
+    
+
     //m_circle = std::make_unique<Circle>(Circle({ 0.0f, 0.0f }, 150.0f, { 0.0f, 1.0f, 1.0f, 1.0f }));
     //m_raytracer = std::make_unique<Raytracer>(m_width, m_height);
 }
@@ -187,27 +194,29 @@ bool ExampleApp::Initialize()
     //////////////////////
     for (auto& model : m_models)
     {
-        Appbase::CreateVertexBuffer(m_vertexBuffer3D, model->GetVertices());
-        Appbase::CreateIndexBuffer(m_indexBuffer3D, model->GetIndices());
-        m_indexCount3D = model->GetIndices().size();
+        Appbase::CreateVertexBuffer(m_vertexBuffer, model->GetVertices());
+        Appbase::CreateIndexBuffer(m_indexBuffer, model->GetIndices());
+        m_indexCount = model->GetIndices().size();
 
-        Appbase::CreateVertexBuffer(m_vertexBufferNormal3D, model->GetNormalVertices());
-        Appbase::CreateIndexBuffer(m_indexBufferNormal3D, model->GetNormalIndices());
-        m_indexCountNormal3D = model->GetNormalIndices().size();
+        Appbase::CreateVertexBuffer(m_vertexBufferNormal, model->GetNormalVertices());
+        Appbase::CreateIndexBuffer(m_indexBufferNormal, model->GetNormalIndices());
+        m_indexCountNormal = model->GetNormalIndices().size();
     }
 
     Appbase::CreateConstantBuffer(m_vertexConstantBuffer, m_vertexConstantBufferData);
     Appbase::CreateConstantBuffer(m_pixelConstantBuffer, m_pixelConstantBufferData);
 
-    Appbase::CreateConstantBuffer(m_normalVertexConstantBuffer, m_normalVertexConstantBufferData);
+    Appbase::CreateConstantBuffer(m_vertexConstantBufferFocus, m_vertexConstantBufferDataFocus);
 
-    Appbase::CreateConstantBuffer(m_focusConstantBuffer, m_focusConstantBufferData);
-    m_focusConstantBufferData.scale = Matrix::CreateScale(1.1f);
-    UpdateBuffer(m_focusConstantBuffer, m_focusConstantBufferData);
+    Appbase::CreateConstantBuffer(m_vertexConstantBufferNormal, m_vertexConstantBufferDataNormal);
     
     /////////////////
     // create grid //
     /////////////////
+    for (int i = -50; i <= 50; i++)
+        for (int j = -50; j <= 50; j++)
+            m_grid.push_back({ (float)i, 0.0f, (float)j });
+
     Appbase::CreateVertexBuffer(m_vertexBufferGrid, m_grid);
     m_indexCountGrid = m_grid.size();
 
@@ -228,27 +237,31 @@ bool ExampleApp::InitShaders()
     CreatePixelShader(L"PS2D.hlsl", m_pixelShader2D);
 
     // 3D
-    vector<D3D11_INPUT_ELEMENT_DESC> inputLayout3D =
+    vector<D3D11_INPUT_ELEMENT_DESC> inputLayout =
     {
         {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
         {"NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 4 * 3, D3D11_INPUT_PER_VERTEX_DATA, 0},
         {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 4 * 3 + 4 * 3, D3D11_INPUT_PER_VERTEX_DATA, 0},
     };
 
-    CreateVertexShaderAndInputLayout(L"VS3D.hlsl", m_vertexShader3D, inputLayout3D, m_inputLayout3D);
-    CreatePixelShader(L"PS3D.hlsl", m_pixelShader3D);
+    CreateVertexShaderAndInputLayout(L"VS3D.hlsl", m_vertexShader, inputLayout, m_inputLayout);
+    CreatePixelShader(L"PS3D.hlsl", m_pixelShader);
+
+    // focus
+    CreateVertexShaderAndInputLayout(L"VSFocus.hlsl", m_vertexShaderFocus, inputLayout, m_inputLayout);
+    CreatePixelShader(L"PSFocus.hlsl", m_pixelShaderFocus);
 
     // normal
-    CreateVertexShaderAndInputLayout(L"NormalVS3D.hlsl", m_vertexShaderNormal3D, inputLayout3D, m_inputLayout3D);
-    CreatePixelShader(L"NormalPS3D.hlsl", m_pixelShaderNormal3D);
+    CreateVertexShaderAndInputLayout(L"VSNormal.hlsl", m_vertexShaderNormal, inputLayout, m_inputLayout);
+    CreatePixelShader(L"PSNormal.hlsl", m_pixelShaderNormal);
 
     // grid
-    vector<D3D11_INPUT_ELEMENT_DESC> inputLayoutGrid =
+    vector<D3D11_INPUT_ELEMENT_DESC> gridInputLayout =
     {
         {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
     };
 
-    CreateVertexShaderAndInputLayout(L"VSGrid.hlsl", m_vertexShaderGrid, inputLayoutGrid, m_inputLayoutGrid);
+    CreateVertexShaderAndInputLayout(L"VSGrid.hlsl", m_vertexShaderGrid, gridInputLayout, m_inputLayoutGrid);
     CreateGeometryShader(L"GSGrid.hlsl", m_geometryShaderGrid);
     CreatePixelShader(L"PSGrid.hlsl", m_pixelShaderGrid);
 
@@ -375,12 +388,26 @@ void ExampleApp::Update()
         UpdateBuffer(m_vertexConstantBuffer, m_vertexConstantBufferData);
         UpdateBuffer(m_pixelConstantBuffer, m_pixelConstantBufferData);
 
+        //////////////////
+        // update focus //
+        //////////////////
+        m_vertexConstantBufferDataFocus.modelFocus = 
+            Matrix::CreateScale(m_modelScale) *
+            Matrix::CreateScale(1.1f) *
+            Matrix::CreateRotationX(m_modelRotation.x) *
+            Matrix::CreateRotationY(m_modelRotation.y) *
+            Matrix::CreateRotationZ(m_modelRotation.z) *
+            Matrix::CreateTranslation(m_modelTranslation);
+        m_vertexConstantBufferDataFocus.modelFocus = m_vertexConstantBufferDataFocus.modelFocus.Transpose();
+
+        UpdateBuffer(m_vertexConstantBufferFocus, m_vertexConstantBufferDataFocus);
+
         ///////////////////
         // update normal //
         ///////////////////
         if (m_drawNormal)
         {
-            UpdateBuffer(m_normalVertexConstantBuffer, m_normalVertexConstantBufferData);
+            UpdateBuffer(m_vertexConstantBufferNormal, m_vertexConstantBufferDataNormal);
         }
 
         /////////////////
@@ -400,7 +427,7 @@ void ExampleApp::Render()
 {
     m_context->RSSetViewports(1, &m_viewport);
     m_context->OMSetRenderTargets(1, m_baseRTV.GetAddressOf(), m_depthStencilView.Get());
-    m_context->ClearRenderTargetView(m_baseRTV.Get(), m_initColor);
+    //m_context->ClearRenderTargetView(m_baseRTV.Get(), m_initColor);
     m_context->ClearDepthStencilView(m_depthStencilView.Get(),
         D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
     m_context->OMSetDepthStencilState(m_depthStencilState.Get(), 0);
@@ -408,6 +435,10 @@ void ExampleApp::Render()
 
     if (m_dimension == 2)
     {
+        //
+        m_context->ClearRenderTargetView(m_baseRTV.Get(), m_initColor);
+        //
+
         m_context->IASetInputLayout(m_inputLayout2D.Get());
         m_context->VSSetShader(m_vertexShader2D.Get(), 0, 0);
         m_context->PSSetShader(m_pixelShader2D.Get(), 0, 0);
@@ -437,74 +468,112 @@ void ExampleApp::Render()
     }
     else if (m_dimension == 3)
     {
+        //
+        m_context->ClearRenderTargetView(m_baseRTV.Get(), m_backgroundColor);
+        //
+        
         if (m_drawWireframe)
         {
             m_context->RSSetState(m_rasterizerStateWireframe.Get());
         }
-            
-        // 큐브맵 그리기 -> 그리드 그리기 -> 모델 포커스 그리기 -> 모델 그리기
-        m_context->IASetInputLayout(m_inputLayout3D.Get());
-        m_context->VSSetShader(m_vertexShader3D.Get(), 0, 0);
-        m_context->PSSetShader(m_pixelShader3D.Get(), 0, 0);
-
-        UINT stride = sizeof(Vertex3D);
-        UINT offset = 0;
-        m_context->IASetVertexBuffers(0, 1, m_vertexBuffer3D.GetAddressOf(), &stride, &offset);
-        m_context->IASetIndexBuffer(m_indexBuffer3D.Get(), DXGI_FORMAT_R16_UINT, 0);
-
+         
         m_context->PSSetSamplers(0, 1, m_samplerState.GetAddressOf());
 
         std::vector<ID3D11ShaderResourceView*> nullSRV(m_imageSRVs.size(), nullptr);
         m_context->PSSetShaderResources(0, (UINT)nullSRV.size(), nullSRV.data());
         m_context->PSSetShaderResources(0, 1, m_canvasSRV.GetAddressOf());
 
-        vector<ComPtr<ID3D11Buffer>> vertexConstantBuffers = {
-            m_vertexConstantBuffer,
-            m_focusConstantBuffer
-        };
-
-        m_context->VSSetConstantBuffers(0, vertexConstantBuffers.size(), vertexConstantBuffers.data()->GetAddressOf());
-        m_context->PSSetConstantBuffers(0, 1, m_pixelConstantBuffer.GetAddressOf());
-        m_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-        m_context->DrawIndexed((UINT)m_indexCount3D, 0, 0);
-
-        if (m_drawNormal)
+        // 그리드 그리기 -> 모델 포커스 그리기 -> 모델 그리기
+        // draw grid
         {
-            m_context->IASetInputLayout(m_inputLayout3D.Get());
-            m_context->VSSetShader(m_vertexShaderNormal3D.Get(), 0, 0);
-            m_context->PSSetShader(m_pixelShaderNormal3D.Get(), 0, 0);
+            m_context->IASetInputLayout(m_inputLayoutGrid.Get());
+            m_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
+            //m_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
 
-            stride = sizeof(Vertex3D);
-            offset = 0;
-            m_context->IASetVertexBuffers(0, 1, m_vertexBufferNormal3D.GetAddressOf(), &stride, &offset);
-            m_context->IASetIndexBuffer(m_indexBufferNormal3D.Get(), DXGI_FORMAT_R16_UINT, 0);
-            
-            vector<ComPtr<ID3D11Buffer>> normalVertexConstantBuffers = {
+            UINT stride = sizeof(Vector3);
+            UINT offset = 0;
+
+            m_context->VSSetShader(m_vertexShaderGrid.Get(), 0, 0);
+            m_context->IASetVertexBuffers(0, 1, m_vertexBufferGrid.GetAddressOf(), &stride, &offset);
+
+            m_context->GSSetShader(m_geometryShaderGrid.Get(), 0, 0);
+            vector<ComPtr<ID3D11Buffer>> geometryConstantBuffers = {
                 m_vertexConstantBuffer,
-                m_normalVertexConstantBuffer
+                m_pixelConstantBuffer
             };
+            m_context->GSSetConstantBuffers(0, geometryConstantBuffers.size(), geometryConstantBuffers.data()->GetAddressOf());
 
-            m_context->VSSetConstantBuffers(0, normalVertexConstantBuffers.size(), normalVertexConstantBuffers.data()->GetAddressOf());
-            m_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
+            m_context->PSSetShader(m_pixelShaderGrid.Get(), 0, 0);
 
-            m_context->DrawIndexed((UINT)m_indexCountNormal3D, 0, 0);
+            m_context->Draw((UINT)m_indexCountGrid, 0);
+
+            m_context->GSSetShader(nullptr, 0, 0);
         }
 
-        m_context->IASetInputLayout(m_inputLayoutGrid.Get());
-        m_context->VSSetShader(m_vertexShaderGrid.Get(), 0, 0);
-        m_context->GSSetShader(m_geometryShaderGrid.Get(), 0, 0);
-        m_context->GSSetConstantBuffers(0, 1, m_vertexConstantBuffer.GetAddressOf());
-        m_context->PSSetShader(m_pixelShaderGrid.Get(), 0, 0);
+        // draw focus
+        {
+            //m_context->IASetInputLayout(m_inputLayoutGrid.Get());
+            //m_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+            //
+            //UINT stride = sizeof(Vertex3D);
+            //UINT offset = 0;
+            //
+            //m_context->VSSetShader(m_vertexShaderFocus.Get(), 0, 0);
+            //m_context->IASetVertexBuffers(0, 1, m_vertexBuffer.GetAddressOf(), &stride, &offset);
+            //m_context->IASetIndexBuffer(m_indexBuffer.Get(), DXGI_FORMAT_R16_UINT, 0);
+            //vector<ComPtr<ID3D11Buffer>> vertexConstantBuffers = {
+            //    m_vertexConstantBuffer,
+            //    m_vertexConstantBufferFocus
+            //};
+            //m_context->VSSetConstantBuffers(0, vertexConstantBuffers.size(), vertexConstantBuffers.data()->GetAddressOf());
+            //
+            //m_context->PSSetShader(m_pixelShaderFocus.Get(), 0, 0);
+            //m_context->PSSetConstantBuffers(0, 1, m_pixelConstantBuffer.GetAddressOf());
+            //
+            //m_context->DrawIndexed((UINT)m_indexCount, 0, 0);
+        }
 
-        stride = sizeof(Vector3);
-        offset = 0;
-        m_context->IASetVertexBuffers(0, 1, m_vertexBufferGrid.GetAddressOf(), &stride, &offset);
-        m_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
+        // draw model
+        {
+            m_context->IASetInputLayout(m_inputLayout.Get());
+            m_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-        m_context->Draw((UINT)m_indexCountGrid, 0);
+            UINT stride = sizeof(Vertex3D);
+            UINT offset = 0;
 
-        m_context->GSSetShader(nullptr, 0, 0);
+            m_context->VSSetShader(m_vertexShader.Get(), 0, 0);
+            m_context->IASetVertexBuffers(0, 1, m_vertexBuffer.GetAddressOf(), &stride, &offset);
+            m_context->IASetIndexBuffer(m_indexBuffer.Get(), DXGI_FORMAT_R16_UINT, 0);
+            m_context->VSSetConstantBuffers(0, 1, m_vertexConstantBuffer.GetAddressOf());
+
+            m_context->PSSetShader(m_pixelShader.Get(), 0, 0);
+            m_context->PSSetConstantBuffers(0, 1, m_pixelConstantBuffer.GetAddressOf());
+
+            m_context->DrawIndexed((UINT)m_indexCount, 0, 0);
+        }
+
+        // draw normal
+        if (m_drawNormal)
+        {
+            m_context->IASetInputLayout(m_inputLayout.Get());
+            m_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
+
+            UINT stride = sizeof(Vertex3D);
+            UINT offset = 0;
+
+            m_context->VSSetShader(m_vertexShaderNormal.Get(), 0, 0);
+            m_context->IASetVertexBuffers(0, 1, m_vertexBufferNormal.GetAddressOf(), &stride, &offset);
+            m_context->IASetIndexBuffer(m_indexBufferNormal.Get(), DXGI_FORMAT_R16_UINT, 0);
+            vector<ComPtr<ID3D11Buffer>> normalVertexConstantBuffers = {
+                m_vertexConstantBuffer,
+                m_vertexConstantBufferNormal
+            };
+            m_context->VSSetConstantBuffers(0, normalVertexConstantBuffers.size(), normalVertexConstantBuffers.data()->GetAddressOf());
+
+            m_context->PSSetShader(m_pixelShaderNormal.Get(), 0, 0);
+                
+            m_context->DrawIndexed((UINT)m_indexCountNormal, 0, 0);
+        }   
     }
 }
 
@@ -532,7 +601,7 @@ void ExampleApp::UpdateGUI()
     {
         ImGui::Checkbox("Draw Wireframe", &m_drawWireframe);
         ImGui::Checkbox("Draw Normal", &m_drawNormal);
-        ImGui::SliderFloat("Normal Scale", &m_normalVertexConstantBufferData.scale, 0.0, 1.0);
+        ImGui::SliderFloat("Normal Scale", &m_vertexConstantBufferDataNormal.scale, 0.0, 1.0);
 
         if (m_appState == APP_STATE::HOME)
         {

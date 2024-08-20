@@ -21,23 +21,6 @@ void MakeNormal(const std::vector<Vertex3D>& vertices,
     }
 }
 
-void Fuck(std::vector<Vertex3D>& normalVertices,
-    std::vector<uint16_t>& normalIndices)
-{
-    Vertex3D vertex;
-    vertex.position = { 1.0f, 1.0f, -1.0f };
-    vertex.normal = { 0.0f, 0.0f, -1.0f };
-    vertex.texcoord = { 0.0f, 0.0f };
-
-    normalVertices.push_back(vertex);
-
-    vertex.texcoord = { 1.0f, 0.0f };
-    normalVertices.push_back(vertex);
-
-    normalIndices.push_back(0);
-    normalIndices.push_back(1);
-}
-
 void MakeBox(std::vector<Vertex3D>& vertices, std::vector<uint16_t>& indices, const float scale)
 {
     vector<Vector3> positions;
@@ -148,4 +131,22 @@ void MakeBox(std::vector<Vertex3D>& vertices, std::vector<uint16_t>& indices, co
 
     for (size_t i = 0; i < index.size(); i++)
         indices.push_back(index[i]);
+}
+
+void MakeCylinder(std::vector<Vertex3D>& vertices, std::vector<uint16_t>& indices, const float radius, const float height)
+{
+    vector<Vector3> positions;
+    vector<Vector3> normals;
+    vector<Vector2> texcoords;
+
+
+}
+
+void MakeSphere(std::vector<Vertex3D>& vertices, std::vector<uint16_t>& indices, const float radius)
+{
+    vector<Vector3> positions;
+    vector<Vector3> normals;
+    vector<Vector2> texcoords;
+
+
 }
