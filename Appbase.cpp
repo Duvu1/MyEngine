@@ -114,6 +114,38 @@ bool Appbase::InitApp()
 
     HRESULT hr = S_OK;
     
+    D3D_FEATURE_LEVEL FeatureLevels[] = {
+    D3D_FEATURE_LEVEL_11_0,
+    D3D_FEATURE_LEVEL_10_0,
+    };
+
+    D3D_FEATURE_LEVEL FeatureLevel;
+
+    ///////////////////
+    // create device //
+    ///////////////////
+    hr = D3D11CreateDevice(
+        NULL,
+        D3D_DRIVER_TYPE_HARDWARE,
+        NULL,
+        createDeviceFlags,
+        FeatureLevels,
+        1,
+        D3D11_SDK_VERSION,
+        m_device.GetAddressOf(),
+        &FeatureLevel,
+        m_context.GetAddressOf()
+    );
+
+    if (FAILED(hr))
+    {
+        cout << "Failed: D3D11CreateDevice()" << endl;
+        return false;
+    }
+
+    // MSAA
+    m_device->CheckMultisampleQualityLevels(DXGI_FORMAT_R8G8B8A8_UNORM, 4, &m_numQualityLevels);
+
     //////////////////////
     // create swapchain //
     //////////////////////
@@ -127,16 +159,18 @@ bool Appbase::InitApp()
     swapChainDesc.BufferDesc.RefreshRate.Denominator = 1;
     swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
     swapChainDesc.OutputWindow = m_hWnd;
-    swapChainDesc.SampleDesc.Count = 1;
-    swapChainDesc.SampleDesc.Quality = 0;
+    if (m_numQualityLevels > 0)
+    {
+        swapChainDesc.SampleDesc.Count = 4;
+        swapChainDesc.SampleDesc.Quality = m_numQualityLevels - 1;
+    }
+    else
+    {
+        swapChainDesc.SampleDesc.Count = 1;
+        swapChainDesc.SampleDesc.Quality = 0;
+    }
     swapChainDesc.Windowed = TRUE;
 
-    D3D_FEATURE_LEVEL FeatureLevels[] = {
-        D3D_FEATURE_LEVEL_11_0,
-        D3D_FEATURE_LEVEL_10_0,
-    };
-
-    D3D_FEATURE_LEVEL FeatureLevel;
 
     hr = D3D11CreateDeviceAndSwapChain(
         NULL,
@@ -263,6 +297,7 @@ LRESULT Appbase::MsgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
         FILE* fp;
         fp = _tfreopen(_T("CONOUT$"), _T("w"), stdout);
+        fp = _tfreopen(_T("CONIN$"), _T("r"), stdin);
         fp = _tfreopen(_T("CONERR$"), _T("w"), stderr);
         _tsetlocale(LC_ALL, _T(""));
 
@@ -293,15 +328,22 @@ LRESULT Appbase::MsgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             SetViewport();
         }
     case WM_MOUSEMOVE:
-        std::cout << "Mouse " << LOWORD(lParam) << " " << HIWORD(lParam) << std::endl;
+    {
+        int x = LOWORD(lParam);
+        int y = HIWORD(lParam);
+        _tprintf(_T("Mouse %d %d\n"), x, y);
+        //std::cout << "Mouse " << LOWORD(lParam) << " " << HIWORD(lParam) << std::endl;
         SetMousePos(LOWORD(lParam), HIWORD(lParam));
         break;
+    }
     case WM_LBUTTONDOWN:
-        std::cout << "WM_LBUTTONDOWN Left mouse button" << std::endl;
+        _tprintf(_T("WM_LBUTTONDOWN Left mouse button\n"));
+        //std::cout << "WM_LBUTTONDOWN Left mouse button" << std::endl;
         m_isLButtonPressed = true;
         break;
     case WM_LBUTTONUP:
-        std::cout << "WM_LBUTTONUP Left mouse button" << std::endl;
+        _tprintf(_T("WM_LBUTTONUP Left mouse button\n"));
+        //std::cout << "WM_LBUTTONUP Left mouse button" << std::endl;
         m_isDragging = false;
         m_isLButtonPressed = false;
         break;
@@ -313,28 +355,42 @@ LRESULT Appbase::MsgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         m_isMButtonPressed = false;
         break;
     case WM_MOUSEWHEEL:
-        std::cout << "WM_MOUSEWHEEL " << (int)wParam << std::endl;
+    {
+        int wheelValue = (int)wParam;
+        _tprintf(_T("WM_MOUSEWHEEL %d\n"), wheelValue);
+        //std::cout << "WM_MOUSEWHEEL " << (int)wParam << std::endl;
         m_isScrolling = true;
 
-        if ((int)wParam > 0)
+        if (wheelValue > 0)
             m_mouseWheelDirection = 1;
-        else if ((int)wParam < 0)
+        else if (wheelValue < 0)
             m_mouseWheelDirection = -1;
         else
             m_mouseWheelDirection = 0;
         break;
+    }
     case WM_RBUTTONUP:
-        std::cout << "WM_RBUTTONUP Right mouse button" << std::endl;
+        _tprintf(_T("WM_RBUTTONUP Left mouse button\n"));
+        //std::cout << "WM_RBUTTONUP Right mouse button" << std::endl;
         break;
     case WM_KEYDOWN:
-        std::cout << "WM_KEYDOWN " << (int)wParam << std::endl;
-        KeyControl((int)wParam);
+    {
+        int keyValue = (int)wParam;
+        _tprintf(_T("WM_KEYDOWN %d\n"), keyValue);
+        //std::cout << "WM_KEYDOWN " << (int)wParam << std::endl;
+        KeyControl(keyValue);
         break;
+    }
     case WM_KEYUP:
-        std::cout << "WM_KEYUP " << (int)wParam << std::endl;
+    {
+        int keyValue = (int)wParam;
+        _tprintf(_T("WM_KEYUP %d\n"), keyValue);
+        //std::cout << "WM_KEYUP " << (int)wParam << std::endl;
         //m_key[wParam] = false;
         break;
+    }
     case WM_DESTROY:
+        FreeConsole();
         PostQuitMessage(0);
         break;
     default:
@@ -424,8 +480,16 @@ bool Appbase::CreateDepthBuffer()
     depthStencilBufferDesc.MipLevels = 1;
     depthStencilBufferDesc.ArraySize = 1;
     depthStencilBufferDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT; // depth 24bits, stencil 8bits
-    depthStencilBufferDesc.SampleDesc.Count = 1;
-    depthStencilBufferDesc.SampleDesc.Quality = 0;
+    if (m_numQualityLevels > 0)
+    {
+        depthStencilBufferDesc.SampleDesc.Count = 4;
+        depthStencilBufferDesc.SampleDesc.Quality = m_numQualityLevels - 1;
+    }
+    else
+    {
+        depthStencilBufferDesc.SampleDesc.Count = 1;
+        depthStencilBufferDesc.SampleDesc.Quality = 0;
+    }
     depthStencilBufferDesc.Usage = D3D11_USAGE_DEFAULT;
     depthStencilBufferDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
     depthStencilBufferDesc.CPUAccessFlags = 0;

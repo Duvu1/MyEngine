@@ -160,6 +160,8 @@ protected:
     ComPtr<ID3D11DepthStencilView> m_depthStencilView;
     ComPtr<ID3D11DepthStencilState> m_depthStencilState;
 
+    UINT m_numQualityLevels;
+
     // SRV, RTV
     std::vector<ComPtr<ID3D11ShaderResourceView>> m_imageSRVs;
     ComPtr<ID3D11RenderTargetView> m_imageRTV;
