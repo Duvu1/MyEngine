@@ -1,9 +1,11 @@
 #pragma once
 
+#include "struct.h"
 #include "Appbase.h"
 #include "Circle.h"
 #include "Image.h"
-#include "Model.h"
+#include "MakeMesh.h"
+#include "Mesh.h"
 #include "Raytracer.h"
 
 enum class APP_STATE
@@ -70,6 +72,7 @@ private:
     bool m_drawNormal = true;
     bool m_drawWireframe = false;
     APP_STATE m_appState = APP_STATE::HOME;
+    bool m_firstStart = true;
 
     std::unique_ptr<Raytracer> m_raytracer;
 
@@ -102,6 +105,11 @@ private:
     Vector3 m_modelRotation = Vector3(0.0f);
     Vector3 m_modelTranslation = Vector3(0.0f);
 
+    Vector3 m_modelScaleEdited = Vector3(1.0f);
+    Vector3 m_modelRotationEdited = Vector3(0.0f);
+    Vector3 m_modelTranslationEdited = Vector3(0.0f);
+
+    bool m_isModelMoved = true;
     bool m_isViewMoved = true;
 
     glm::vec2 m_viewPosAngle = { 0.0f, 0.0f };
@@ -137,7 +145,8 @@ private:
     std::vector<Vector3> m_grid;
     std::unique_ptr<Circle> m_circle;
     std::unique_ptr<Square> m_square;
-    std::vector<std::shared_ptr<Model>> m_models;
+    std::vector<std::shared_ptr<Mesh>> m_meshes;
+    std::shared_ptr<Mesh> m_normals;
 
     // mouse
     Vector2 m_prevMousePos = { 0, 0 };

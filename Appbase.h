@@ -6,22 +6,7 @@
 #include <d3dcompiler.h> // for compile shaders
 
 #include "framework.h"
-
 #include "MyEngine.h"
-
-struct Vertex2D
-{
-    glm::vec4 pos;
-    glm::vec4 color;
-    glm::vec2 uv;
-};
-
-struct Vertex3D
-{
-    Vector3 position;
-    Vector3 normal;
-    Vector2 texcoord;
-};
 
 class Appbase
 {
@@ -70,7 +55,7 @@ protected:
     );
 
     // buffers handler
-    bool CreateIndexBuffer(ComPtr<ID3D11Buffer>& buffer, const std::vector<uint16_t>& indexData);
+    bool CreateIndexBuffer(ComPtr<ID3D11Buffer>& buffer, const std::vector<uint32_t>& indexData);
 
     template <typename T>
     bool CreateVertexBuffer(ComPtr<ID3D11Buffer>& buffer, const std::vector<T>& vertexData)

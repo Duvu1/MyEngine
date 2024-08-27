@@ -60,11 +60,23 @@
     <ClInclude Include="ExampleApp.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="Model.h">
+    <ClInclude Include="MeshData.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="MakeMesh.cpp">
       <Filter>소스 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="MakeMesh.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="struct.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="ModelLoader.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Mesh.h">
+      <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -83,7 +95,10 @@
     <ClCompile Include="ExampleApp.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="Model.cpp">
+    <ClCompile Include="MeshData.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="ModelLoader.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>

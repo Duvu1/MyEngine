@@ -20,17 +20,15 @@ ExampleApp::ExampleApp()
     image.ReadFromFile("image1.jpg");
     m_images.push_back(image);
 
-    shared_ptr<Model> model = std::make_shared<Model>();
-    MakeBox(model->GetVertices(), model->GetIndices(), 1.0f);
-    MakeNormal(model->GetVertices(),
-               model->GetNormalVertices(), model->GetNormalIndices());
-    m_models.push_back(model);
+    //MakeMesh::MakeNormal(model->GetVertices(),
+    //           model->GetNormalVertices(), model->GetNormalIndices());
+    //m_models.push_back(model);
 
-    //shared_ptr<Model> cube = std::make_shared<Model>();
+    //shared_ptr<Mesh> cube = std::make_shared<Mesh>();
     //MakeBox(cube->GetVertices(), cube->GetIndices(), 10.0f);
     //m_models.push_back(cube);
 
-    //shared_ptr<Model> sphere = std::make_shared<Model>();
+    //shared_ptr<Mesh> sphere = std::make_shared<Mesh>();
     
 
     //m_circle = std::make_unique<Circle>(Circle({ 0.0f, 0.0f }, 150.0f, { 0.0f, 1.0f, 1.0f, 1.0f }));
@@ -179,7 +177,7 @@ bool ExampleApp::Initialize()
     };
     Appbase::CreateVertexBuffer(m_vertexBuffer2D, vertices);
 
-    const std::vector<uint16_t> indices =
+    const std::vector<uint32_t> indices =
     {
         0, 1, 2,
         0, 2, 3,
@@ -192,23 +190,56 @@ bool ExampleApp::Initialize()
     //////////////////////
     // create 3D object //
     //////////////////////
-    for (auto& model : m_models)
-    {
-        Appbase::CreateVertexBuffer(m_vertexBuffer, model->GetVertices());
-        Appbase::CreateIndexBuffer(m_indexBuffer, model->GetIndices());
-        m_indexCount = model->GetIndices().size();
-
-        Appbase::CreateVertexBuffer(m_vertexBufferNormal, model->GetNormalVertices());
-        Appbase::CreateIndexBuffer(m_indexBufferNormal, model->GetNormalIndices());
-        m_indexCountNormal = model->GetNormalIndices().size();
-    }
-
+    vector<MeshData> meshes;
+    meshes = MakeMesh::ReadFromFile("C:/Users/Duvu/source/repos/MyEngine/Assets/Meshes/", "monkey.obj");
     Appbase::CreateConstantBuffer(m_vertexConstantBuffer, m_vertexConstantBufferData);
     Appbase::CreateConstantBuffer(m_pixelConstantBuffer, m_pixelConstantBufferData);
 
+    for (auto& meshData : meshes)
+    {
+        auto newMesh = std::make_shared<Mesh>();
+
+        Appbase::CreateVertexBuffer(newMesh->vertexBuffer, meshData.vertices);
+        Appbase::CreateIndexBuffer(newMesh->indexBuffer, meshData.indices);
+        newMesh->indexCount = meshData.indices.size();
+
+        //if (!meshData.textureFilename.empty())
+
+        newMesh->vertexConstantBuffer = m_vertexConstantBuffer;
+        newMesh->pixelConstantBuffer = m_pixelConstantBuffer;
+
+        m_meshes.push_back(newMesh);
+    }
+
     Appbase::CreateConstantBuffer(m_vertexConstantBufferFocus, m_vertexConstantBufferDataFocus);
 
-    Appbase::CreateConstantBuffer(m_vertexConstantBufferNormal, m_vertexConstantBufferDataNormal);
+    // normals
+    m_normals = std::make_shared<Mesh>();
+    std::vector<Vertex3D> normalVertices;
+    std::vector<uint32_t> normalIndices;
+
+    size_t offset = 0;
+    for (auto& meshData : meshes)
+    {
+        for (size_t i = 0; i < meshData.vertices.size(); i++)
+        {
+            auto vertex = meshData.vertices[i];
+
+            vertex.texcoord.x = 0.0f;
+            normalVertices.push_back(vertex);
+            normalIndices.push_back(uint32_t((i + offset) * 2));
+
+            vertex.texcoord.x = 1.0f;
+            normalVertices.push_back(vertex);
+            normalIndices.push_back(uint32_t((i + offset) * 2 + 1));
+        }
+        offset += meshData.vertices.size();
+    }
+
+    Appbase::CreateVertexBuffer(m_normals->vertexBuffer, normalVertices);
+    Appbase::CreateIndexBuffer(m_normals->indexBuffer, normalIndices);
+    m_normals->indexCount = normalIndices.size();
+    Appbase::CreateConstantBuffer(m_normals->vertexConstantBuffer, m_vertexConstantBufferDataNormal);
     
     /////////////////
     // create grid //
@@ -300,59 +331,96 @@ void ExampleApp::Update()
     }
     else if (m_dimension == 3)
     {
-        if (m_isScrolling)
+        if (m_appState == APP_STATE::HOME)
         {
-            // 마우스 스크롤링으로 물체 확대 및 축소
-            m_viewDistance -= m_mouseWheelDirection;
+            if (m_isScrolling)
+            {
+                // 마우스 스크롤링으로 물체 확대 및 축소
+                m_viewDistance -= m_mouseWheelDirection;
 
-            m_isScrolling = false;
-            m_isViewMoved = true;
+                m_isScrolling = false;
+                m_isViewMoved = true;
+            }
+
+            if (m_isMButtonPressed)
+            {
+                // 마우스 스크롤 클릭 드래그로 특정 지점을 중심으로 시점 회전
+                m_curMousePos = GetMousePos();
+
+                if (!m_isDragging)
+                {
+                    // 드래그 시작 순간 진입하는 조건문
+                    m_isDragging = true;
+                    m_prevMousePos = m_curMousePos;
+
+                    if (cos(m_viewPosAngle.y) > 0)
+                        m_viewRotateDirection = -1;
+                    else
+                        m_viewRotateDirection = 1;
+
+                }
+                else if (m_isDragging)
+                {
+                    // 드래그 시작 이후 진입하는 조건문
+                    Vector2 translation = m_curMousePos - m_prevMousePos;
+                    translation /= 100.0f;
+                    translation.x *= m_viewRotateDirection;
+
+                    float translationX = m_curMousePos.x - m_prevMousePos.x;
+                    float translationY = m_curMousePos.y - m_prevMousePos.y;
+
+                    m_viewPosAngle.x += translation.x;
+                    m_viewPosAngle.y += translation.y;
+                    //m_viewPosAngle.x = translationX / 100.0f;
+                    //m_viewPosAngle.y = -translationY / 100.0f;
+
+                    printf("viewPosAngle %f %f\n", m_viewPosAngle.x, m_viewPosAngle.y);
+                    if (cos(m_viewPosAngle.y) > 0)
+                    //if (m_viewPosAngle.y < 180.0f)
+                        m_viewUp.y = 1.0f;
+                    else
+                        m_viewUp.y = -1.0f;
+
+                    m_prevMousePos = m_curMousePos;
+                }
+
+                m_isViewMoved = true;
+            }
         }
-        
-        if (m_isMButtonPressed)
+        else if (m_appState == APP_STATE::EDIT_SCALE)
         {
-            // 마우스 스크롤 클릭 드래그로 특정 지점을 중심으로 시점 회전
             m_curMousePos = GetMousePos();
 
-            if (!m_isDragging)
+            if (m_firstStart)
             {
-                // 드래그 시작 순간 진입하는 조건문
-                m_isDragging = true;
-                m_prevMousePos = m_curMousePos;
-
-                if (cos(m_viewPosAngle.y) > 0)
-                    m_viewRotateDirection = -1;
-                else
-                    m_viewRotateDirection = 1;
-            }
-            else if (m_isDragging)
-            {
-                // 드래그 시작 이후 진입하는 조건문
-                Vector2 translation = m_curMousePos - m_prevMousePos;
-                translation /= 100.0f;
-                translation.x *= m_viewRotateDirection;
-
-                m_viewPosAngle.x += translation.x;
-                m_viewPosAngle.y += translation.y;
-
-                if (cos(m_viewPosAngle.y) > 0)
-                    m_viewUp.y = 1.0f;
-                else
-                    m_viewUp.y = -1.0f;
-
+                m_firstStart = false;
                 m_prevMousePos = m_curMousePos;
             }
+            else
+            {
+                float translationX = abs(m_prevMousePos.x - m_curMousePos.x) / 10.0f;
+                float translationY = abs(m_prevMousePos.y - m_curMousePos.y) / 10.0f;
+                
+                printf("Translation %f %f\n", translationX, translationY);
+                
+                float scale = sqrt(translationX * translationX * + translationY * translationY) / 1000.0f + 1.0f;
+                
+                printf("Scale %f\n", scale);
+                
+                m_modelScaleEdited = Vector3(scale, scale, scale);
+            }
 
-            m_isViewMoved = true;
+            m_isModelMoved = true;
         }
 
-        if (m_isViewMoved)
+        if (m_isModelMoved)
         {
             /////////////////////////
             // update model matrix //
             /////////////////////////
             m_vertexConstantBufferData.model =
                 Matrix::CreateScale(m_modelScale) *
+                Matrix::CreateScale(m_modelScaleEdited) *
                 Matrix::CreateRotationX(m_modelRotation.x) *
                 Matrix::CreateRotationY(m_modelRotation.y) *
                 Matrix::CreateRotationZ(m_modelRotation.z) *
@@ -362,12 +430,23 @@ void ExampleApp::Update()
             m_vertexConstantBufferData.inverseTranspose = m_vertexConstantBufferData.model.Invert();
             m_vertexConstantBufferData.inverseTranspose = m_vertexConstantBufferData.inverseTranspose.Transpose();
 
+            m_isModelMoved = false;
+        }
+
+        if (m_isViewMoved)
+        {
             ////////////////////////
             // update view matrix //
             ////////////////////////
             m_viewPos.x = m_viewDistance * cos(m_viewPosAngle.y) * sin(m_viewPosAngle.x);
             m_viewPos.y = -m_viewDistance * sin(m_viewPosAngle.y);
             m_viewPos.z = -m_viewDistance * cos(m_viewPosAngle.y) * cos(m_viewPosAngle.x);
+
+            //Matrix viewRotation = 
+            //    Matrix::CreateFromAxisAngle(Vector3(0.0, 1.0, 0.0), m_viewPosAngle.x) *
+            //    Matrix::CreateFromAxisAngle(Vector3(1.0, 0.0, 0.0), m_viewPosAngle.y) *
+            //    Matrix::CreateFromAxisAngle(Vector3(0.0, 0.0, 1.0), m_viewPosAngle.y);
+            //m_viewPos = Vector3::Transform(m_viewPos, viewRotation);
 
             m_vertexConstantBufferData.view = XMMatrixLookAtLH(m_viewPos, m_viewLookAt, m_viewUp);
             //m_vertexConstantBufferData.view = XMMatrixLookToLH(m_viewPos, m_viewDir, m_viewUp);
@@ -385,8 +464,8 @@ void ExampleApp::Update()
             XMConvertToRadians(m_fieldOfViewAngle), GetAspectRatio(), m_nearZ, m_farZ);
         m_vertexConstantBufferData.projection = m_vertexConstantBufferData.projection.Transpose();
 
-        UpdateBuffer(m_vertexConstantBuffer, m_vertexConstantBufferData);
-        UpdateBuffer(m_pixelConstantBuffer, m_pixelConstantBufferData);
+        UpdateBuffer(m_meshes[0]->vertexConstantBuffer, m_vertexConstantBufferData);
+        UpdateBuffer(m_meshes[0]->pixelConstantBuffer, m_pixelConstantBufferData);
 
         //////////////////
         // update focus //
@@ -407,7 +486,7 @@ void ExampleApp::Update()
         ///////////////////
         if (m_drawNormal)
         {
-            UpdateBuffer(m_vertexConstantBufferNormal, m_vertexConstantBufferDataNormal);
+            UpdateBuffer(m_normals->vertexConstantBuffer, m_vertexConstantBufferDataNormal);
         }
 
         /////////////////
@@ -534,6 +613,7 @@ void ExampleApp::Render()
         }
 
         // draw model
+        for (const auto& mesh : m_meshes)
         {
             m_context->IASetInputLayout(m_inputLayout.Get());
             m_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -542,14 +622,14 @@ void ExampleApp::Render()
             UINT offset = 0;
 
             m_context->VSSetShader(m_vertexShader.Get(), 0, 0);
-            m_context->IASetVertexBuffers(0, 1, m_vertexBuffer.GetAddressOf(), &stride, &offset);
-            m_context->IASetIndexBuffer(m_indexBuffer.Get(), DXGI_FORMAT_R16_UINT, 0);
-            m_context->VSSetConstantBuffers(0, 1, m_vertexConstantBuffer.GetAddressOf());
+            m_context->IASetVertexBuffers(0, 1, mesh->vertexBuffer.GetAddressOf(), &stride, &offset);
+            m_context->IASetIndexBuffer(mesh->indexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
+            m_context->VSSetConstantBuffers(0, 1, mesh->vertexConstantBuffer.GetAddressOf());
 
             m_context->PSSetShader(m_pixelShader.Get(), 0, 0);
-            m_context->PSSetConstantBuffers(0, 1, m_pixelConstantBuffer.GetAddressOf());
+            m_context->PSSetConstantBuffers(0, 1, mesh->pixelConstantBuffer.GetAddressOf());
 
-            m_context->DrawIndexed((UINT)m_indexCount, 0, 0);
+            m_context->DrawIndexed((UINT)mesh->indexCount, 0, 0);
         }
 
         // draw normal
@@ -562,17 +642,17 @@ void ExampleApp::Render()
             UINT offset = 0;
 
             m_context->VSSetShader(m_vertexShaderNormal.Get(), 0, 0);
-            m_context->IASetVertexBuffers(0, 1, m_vertexBufferNormal.GetAddressOf(), &stride, &offset);
-            m_context->IASetIndexBuffer(m_indexBufferNormal.Get(), DXGI_FORMAT_R16_UINT, 0);
+            m_context->IASetVertexBuffers(0, 1, m_normals->vertexBuffer.GetAddressOf(), &stride, &offset);
+            m_context->IASetIndexBuffer(m_normals->indexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
             vector<ComPtr<ID3D11Buffer>> normalVertexConstantBuffers = {
-                m_vertexConstantBuffer,
-                m_vertexConstantBufferNormal
+                m_meshes[0]->vertexConstantBuffer,
+                m_normals->vertexConstantBuffer
             };
             m_context->VSSetConstantBuffers(0, normalVertexConstantBuffers.size(), normalVertexConstantBuffers.data()->GetAddressOf());
 
             m_context->PSSetShader(m_pixelShaderNormal.Get(), 0, 0);
                 
-            m_context->DrawIndexed((UINT)m_indexCountNormal, 0, 0);
+            m_context->DrawIndexed((UINT)m_normals->indexCount, 0, 0);
         }   
     }
 }
@@ -606,7 +686,7 @@ void ExampleApp::UpdateGUI()
         if (m_appState == APP_STATE::HOME)
         {
             ImGui::Text("Box");
-            ImGui::SliderFloat3("Model Position", &m_modelTranslation.x, -2.0f, 2.0f);
+            ImGui::SliderFloat3("Mesh Position", &m_modelTranslation.x, -2.0f, 2.0f);
             ImGui::SliderFloat3("View Position", &m_viewPos.x, -2.0f, 2.0f);
             ImGui::SliderFloat("View Distance", &m_viewDistance, -10.f, 10.f);
             ImGui::SliderFloat3("View Direction", &m_viewDir.x, -2.0f, 2.0f);
@@ -619,12 +699,12 @@ void ExampleApp::UpdateGUI()
         else if (m_appState == APP_STATE::EDIT_SCALE)
         {
             ImGui::Text("Scale");
-            ImGui::SliderFloat3("Model Scale", &m_modelScale.x, 0.0f, 3.0f);
+            ImGui::SliderFloat3("Mesh Scale", &m_modelScale.x, 0.0f, 3.0f);
         }
         else if (m_appState == APP_STATE::EDIT_ROTATE)
         {
             ImGui::Text("Rotate");
-            ImGui::SliderFloat3("Model Rotate", &m_modelRotation.x, -3.0f, 3.0f);
+            ImGui::SliderFloat3("Mesh Rotate", &m_modelRotation.x, -3.0f, 3.0f);
         }
     }   
 }
@@ -645,17 +725,29 @@ void ExampleApp::KeyControl(int keyPressed)
     else if (m_appState == APP_STATE::EDIT_SCALE)
     {
         if (keyPressed == 27)
+        {
             m_appState = APP_STATE::HOME;
+
+            m_modelScale *= m_modelScaleEdited;
+
+            m_firstStart = false;
+        }
     }
     else if (m_appState == APP_STATE::EDIT_ROTATE)
     {
         if (keyPressed == 27)
+        {
             m_appState = APP_STATE::HOME;
+            m_firstStart = false;
+        }
     }
     else if (m_appState == APP_STATE::EDIT_ROTATE)
     {
         if (keyPressed == 27)
+        {
             m_appState = APP_STATE::HOME;
+            m_firstStart = false;
+        }
     }
 
 }

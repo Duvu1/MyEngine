@@ -329,11 +329,9 @@ LRESULT Appbase::MsgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         }
     case WM_MOUSEMOVE:
     {
-        int x = LOWORD(lParam);
-        int y = HIWORD(lParam);
-        _tprintf(_T("Mouse %d %d\n"), x, y);
-        //std::cout << "Mouse " << LOWORD(lParam) << " " << HIWORD(lParam) << std::endl;
         SetMousePos(LOWORD(lParam), HIWORD(lParam));
+        _tprintf(_T("Mouse %d %d\n"), m_mousePosX, m_mousePosY);
+        //std::cout << "Mouse " << LOWORD(lParam) << " " << HIWORD(lParam) << std::endl;
         break;
     }
     case WM_LBUTTONDOWN:
@@ -344,7 +342,6 @@ LRESULT Appbase::MsgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case WM_LBUTTONUP:
         _tprintf(_T("WM_LBUTTONUP Left mouse button\n"));
         //std::cout << "WM_LBUTTONUP Left mouse button" << std::endl;
-        m_isDragging = false;
         m_isLButtonPressed = false;
         break;
     case WM_MBUTTONDOWN:
@@ -639,16 +636,16 @@ bool Appbase::CreateGeometryShader(const std::wstring& filename, ComPtr<ID3D11Ge
     return true;
 }
 
-bool Appbase::CreateIndexBuffer(ComPtr<ID3D11Buffer>& buffer, const std::vector<uint16_t>& indexData)
+bool Appbase::CreateIndexBuffer(ComPtr<ID3D11Buffer>& buffer, const std::vector<uint32_t>& indexData)
 {
     D3D11_BUFFER_DESC bufferDesc;
     ZeroMemory(&bufferDesc, sizeof(bufferDesc));
     bufferDesc.Usage = D3D11_USAGE_DYNAMIC;                // write access access by CPU and GPU
-    bufferDesc.ByteWidth = UINT(sizeof(uint16_t) * indexData.size());
+    bufferDesc.ByteWidth = UINT(sizeof(uint32_t) * indexData.size());
     bufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;        // use as a index buffer
     bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;    // allow CPU to write in buffer
     bufferDesc.MiscFlags = 0;
-    bufferDesc.StructureByteStride = sizeof(uint16_t);
+    bufferDesc.StructureByteStride = sizeof(uint32_t);
 
     D3D11_SUBRESOURCE_DATA indexBufferData = { 0, };
     indexBufferData.pSysMem = indexData.data();
