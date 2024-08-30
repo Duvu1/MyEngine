@@ -1,6 +1,5 @@
 #include "MakeMesh.h"
 
-
 using namespace std;
 
 vector<MeshData> MakeMesh::ReadFromFile(string basePath, string filename)

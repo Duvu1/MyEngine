@@ -1,5 +1,6 @@
 #include "ExampleApp.h"
 
+#include <cmath>
 #include <tuple>
 
 #include "MakeMesh.cpp"
@@ -336,7 +337,9 @@ void ExampleApp::Update()
             if (m_isScrolling)
             {
                 // 마우스 스크롤링으로 물체 확대 및 축소
-                m_viewDistance -= m_mouseWheelDirection;
+                
+                m_viewDistance += m_mouseWheelDirection * m_viewDistance * 0.2f;
+                m_viewDistance = clamp(m_viewDistance, 0.01f, 200.0f);
 
                 m_isScrolling = false;
                 m_isViewMoved = true;
@@ -371,12 +374,10 @@ void ExampleApp::Update()
 
                     m_viewPosAngle.x += translation.x;
                     m_viewPosAngle.y += translation.y;
-                    //m_viewPosAngle.x = translationX / 100.0f;
-                    //m_viewPosAngle.y = -translationY / 100.0f;
 
                     printf("viewPosAngle %f %f\n", m_viewPosAngle.x, m_viewPosAngle.y);
+
                     if (cos(m_viewPosAngle.y) > 0)
-                    //if (m_viewPosAngle.y < 180.0f)
                         m_viewUp.y = 1.0f;
                     else
                         m_viewUp.y = -1.0f;
@@ -391,23 +392,99 @@ void ExampleApp::Update()
         {
             m_curMousePos = GetMousePos();
 
-            if (m_firstStart)
+            if (m_firstEntry)
             {
-                m_firstStart = false;
+                m_firstEntry = false;
+
+                m_prevScale = m_curScale;
+                m_originToCursor = m_curMousePos.x * m_curMousePos.x + m_curMousePos.y * m_curMousePos.y;
+
+                //m_prevMousePos = m_curMousePos;
+            }
+            else
+            {
+                float originToCursor = m_curMousePos.x * m_curMousePos.x + m_curMousePos.y * m_curMousePos.y;
+
+                m_curScale = sqrt(originToCursor / m_originToCursor);
+                m_curScale *= m_prevScale;
+
+                m_modelScale = Vector3(m_curScale, m_curScale, m_curScale);
+
+                //printf("scale %f\n", m_curScale);
+            }
+
+            m_isModelMoved = true;
+        }
+        else if (m_appState == APP_STATE::EDIT_ROTATE)
+        {
+            m_curMousePos = GetMousePos();
+
+            if (m_firstEntry)
+            {
+                m_firstEntry = false;
+
+                m_rotateAxis = m_viewLookAt - m_viewPos;
+                m_prevRotateAngle = atan2(m_curMousePos.y, m_curMousePos.x);
+                m_prevRotate = m_modelRotation;
+
+                //m_prevMousePos = m_curMousePos;
+            }
+            else
+            {
+                m_curRotateAngle = atan2(m_curMousePos.y, m_curMousePos.x);
+                m_curRotate = Matrix::CreateFromAxisAngle(m_rotateAxis, m_curRotateAngle - m_prevRotateAngle);
+
+                m_modelRotation = m_prevRotate * m_curRotate;
+
+                //printf("axis %f %f %f\n", m_rotateAxis.x, m_rotateAxis.y, m_rotateAxis.z);
+                //printf("angle %f\n", m_curRotateAngle - m_prevRotateAngle);
+            }
+
+            m_isModelMoved = true;
+        }
+        else if (m_appState == APP_STATE::EDIT_TRANSLATE)
+        {
+            m_curMousePos = GetMousePos();
+
+            if (m_firstEntry)
+            {
+                m_firstEntry = false;
+
+                m_viewDir = m_viewLookAt - m_viewPos;
+
+                Vector3 tempVector = Vector3(m_viewDir.x, 0.0f, m_viewDir.z);
+                float f = tempVector.Length();
+
+                m_viewNormalizedVertical.x = m_viewDir.x;
+                m_viewNormalizedVertical.z = m_viewDir.z;
+                if (abs(m_viewDir.y) < 1e-3f)
+                    m_viewNormalizedVertical.y = 1.0f;
+                else
+                    m_viewNormalizedVertical.y = f * f / -m_viewDir.y;// 수직상방벡터의 방향에 영향을 받아 우측방벡터 방향이 뒤집히는 문제
+
+                m_viewNormalizedVertical.Normalize();
+                m_viewNormalizedVertical.Cross(m_viewDir, m_viewNormalizedRight);
+                m_viewNormalizedRight.Normalize();
+
+                m_prevTranslate = m_modelTranslation;
+
                 m_prevMousePos = m_curMousePos;
             }
             else
             {
-                float translationX = abs(m_prevMousePos.x - m_curMousePos.x) / 10.0f;
-                float translationY = abs(m_prevMousePos.y - m_curMousePos.y) / 10.0f;
+                float translateX = (m_curMousePos.x - m_prevMousePos.x) / 100.0f;
+                float translateY = (m_curMousePos.y - m_prevMousePos.y) / 100.0f;
                 
-                printf("Translation %f %f\n", translationX, translationY);
-                
-                float scale = sqrt(translationX * translationX * + translationY * translationY) / 1000.0f + 1.0f;
-                
-                printf("Scale %f\n", scale);
-                
-                m_modelScaleEdited = Vector3(scale, scale, scale);
+                m_curTranslate = Matrix::CreateTranslation(
+                    Vector3(m_viewNormalizedRight.x * translateX + m_viewNormalizedVertical.x * translateY,
+                        m_viewNormalizedVertical.y * translateY,
+                        m_viewNormalizedRight.z * translateX + m_viewNormalizedVertical.z * translateY)
+                );
+
+                m_modelTranslation = m_curTranslate * m_prevTranslate;
+                printf("viewdir y %f\n", m_viewDir.y);
+                printf("vertical %f %f %f\n", m_viewNormalizedVertical.x, m_viewNormalizedVertical.y, m_viewNormalizedVertical.z);
+                printf("right %f %f %f\n", m_viewNormalizedRight.x, m_viewNormalizedRight.y, m_viewNormalizedRight.z);
             }
 
             m_isModelMoved = true;
@@ -418,13 +495,7 @@ void ExampleApp::Update()
             /////////////////////////
             // update model matrix //
             /////////////////////////
-            m_vertexConstantBufferData.model =
-                Matrix::CreateScale(m_modelScale) *
-                Matrix::CreateScale(m_modelScaleEdited) *
-                Matrix::CreateRotationX(m_modelRotation.x) *
-                Matrix::CreateRotationY(m_modelRotation.y) *
-                Matrix::CreateRotationZ(m_modelRotation.z) *
-                Matrix::CreateTranslation(m_modelTranslation);
+            m_vertexConstantBufferData.model = Matrix::CreateScale(m_modelScale) * m_modelRotation * m_modelTranslation;
             m_vertexConstantBufferData.model = m_vertexConstantBufferData.model.Transpose();
 
             m_vertexConstantBufferData.inverseTranspose = m_vertexConstantBufferData.model.Invert();
@@ -441,12 +512,6 @@ void ExampleApp::Update()
             m_viewPos.x = m_viewDistance * cos(m_viewPosAngle.y) * sin(m_viewPosAngle.x);
             m_viewPos.y = -m_viewDistance * sin(m_viewPosAngle.y);
             m_viewPos.z = -m_viewDistance * cos(m_viewPosAngle.y) * cos(m_viewPosAngle.x);
-
-            //Matrix viewRotation = 
-            //    Matrix::CreateFromAxisAngle(Vector3(0.0, 1.0, 0.0), m_viewPosAngle.x) *
-            //    Matrix::CreateFromAxisAngle(Vector3(1.0, 0.0, 0.0), m_viewPosAngle.y) *
-            //    Matrix::CreateFromAxisAngle(Vector3(0.0, 0.0, 1.0), m_viewPosAngle.y);
-            //m_viewPos = Vector3::Transform(m_viewPos, viewRotation);
 
             m_vertexConstantBufferData.view = XMMatrixLookAtLH(m_viewPos, m_viewLookAt, m_viewUp);
             //m_vertexConstantBufferData.view = XMMatrixLookToLH(m_viewPos, m_viewDir, m_viewUp);
@@ -473,10 +538,8 @@ void ExampleApp::Update()
         m_vertexConstantBufferDataFocus.modelFocus = 
             Matrix::CreateScale(m_modelScale) *
             Matrix::CreateScale(1.1f) *
-            Matrix::CreateRotationX(m_modelRotation.x) *
-            Matrix::CreateRotationY(m_modelRotation.y) *
-            Matrix::CreateRotationZ(m_modelRotation.z) *
-            Matrix::CreateTranslation(m_modelTranslation);
+            m_modelRotation *
+            m_modelTranslation;
         m_vertexConstantBufferDataFocus.modelFocus = m_vertexConstantBufferDataFocus.modelFocus.Transpose();
 
         UpdateBuffer(m_vertexConstantBufferFocus, m_vertexConstantBufferDataFocus);
@@ -686,25 +749,22 @@ void ExampleApp::UpdateGUI()
         if (m_appState == APP_STATE::HOME)
         {
             ImGui::Text("Box");
-            ImGui::SliderFloat3("Mesh Position", &m_modelTranslation.x, -2.0f, 2.0f);
-            ImGui::SliderFloat3("View Position", &m_viewPos.x, -2.0f, 2.0f);
+            //ImGui::SliderFloat3("Mesh Position", &m_modelTranslation.x, -2.0f, 2.0f);
             ImGui::SliderFloat("View Distance", &m_viewDistance, -10.f, 10.f);
-            ImGui::SliderFloat3("View Direction", &m_viewDir.x, -2.0f, 2.0f);
-            ImGui::SliderFloat3("View At", &m_viewLookAt.x, -2.0f, 2.0f);
             ImGui::SliderFloat("Field Of View", &m_fieldOfViewAngle, 50.0f, 150.0f);
-            ImGui::SliderFloat("Near Z", &m_nearZ, 0.01f, 10.0f);
-            ImGui::SliderFloat("Far Z", &m_farZ, m_nearZ + 0.01f, 1000.0f);
-            ImGui::SliderFloat("Aspect Ratio", &m_aspectRatio, 0.1f, 3.0f);
+            //ImGui::SliderFloat("Near Z", &m_nearZ, 0.01f, 10.0f);
+            //ImGui::SliderFloat("Far Z", &m_farZ, m_nearZ + 0.01f, 1000.0f);
+            //ImGui::SliderFloat("Aspect Ratio", &m_aspectRatio, 0.1f, 3.0f);
         }
         else if (m_appState == APP_STATE::EDIT_SCALE)
         {
             ImGui::Text("Scale");
-            ImGui::SliderFloat3("Mesh Scale", &m_modelScale.x, 0.0f, 3.0f);
+            ImGui::SliderFloat("Mesh Scale", &m_curScale, 0.0f, 10.0f);
         }
         else if (m_appState == APP_STATE::EDIT_ROTATE)
         {
             ImGui::Text("Rotate");
-            ImGui::SliderFloat3("Mesh Rotate", &m_modelRotation.x, -3.0f, 3.0f);
+            //ImGui::SliderFloat3("Mesh Rotate", &m_modelRotation.x, -3.0f, 3.0f);
         }
     }   
 }
@@ -727,10 +787,7 @@ void ExampleApp::KeyControl(int keyPressed)
         if (keyPressed == 27)
         {
             m_appState = APP_STATE::HOME;
-
-            m_modelScale *= m_modelScaleEdited;
-
-            m_firstStart = false;
+            m_firstEntry = true;
         }
     }
     else if (m_appState == APP_STATE::EDIT_ROTATE)
@@ -738,15 +795,15 @@ void ExampleApp::KeyControl(int keyPressed)
         if (keyPressed == 27)
         {
             m_appState = APP_STATE::HOME;
-            m_firstStart = false;
+            m_firstEntry = true;
         }
     }
-    else if (m_appState == APP_STATE::EDIT_ROTATE)
+    else if (m_appState == APP_STATE::EDIT_TRANSLATE)
     {
         if (keyPressed == 27)
         {
             m_appState = APP_STATE::HOME;
-            m_firstStart = false;
+            m_firstEntry = true;
         }
     }
 

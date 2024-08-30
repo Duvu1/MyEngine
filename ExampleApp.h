@@ -69,10 +69,10 @@ private:
 private:
     int m_dimension = 3;
     bool m_textureOn = false;
-    bool m_drawNormal = true;
+    bool m_drawNormal = false;
     bool m_drawWireframe = false;
     APP_STATE m_appState = APP_STATE::HOME;
-    bool m_firstStart = true;
+    bool m_firstEntry = true;
 
     std::unique_ptr<Raytracer> m_raytracer;
 
@@ -102,29 +102,47 @@ private:
 
     // MVP
     Vector3 m_modelScale = Vector3(1.0f);
-    Vector3 m_modelRotation = Vector3(0.0f);
-    Vector3 m_modelTranslation = Vector3(0.0f);
+    Matrix m_modelRotation = Matrix();
+    Matrix m_modelTranslation = Matrix();
 
-    Vector3 m_modelScaleEdited = Vector3(1.0f);
-    Vector3 m_modelRotationEdited = Vector3(0.0f);
-    Vector3 m_modelTranslationEdited = Vector3(0.0f);
+    // // scale
+    float m_originToCursor = 0.0f;
+    float m_prevScale = 1.0f;
+    float m_curScale = 1.0f;
 
+    // // rotate
+    Vector3 m_rotateAxis = m_viewPos - m_viewLookAt;
+    float m_prevRotateAngle = 0.0f;
+    float m_curRotateAngle = 0.0f;
+    Matrix m_prevRotate = Matrix();
+    Matrix m_curRotate = Matrix();
+
+    // // translation
+    Matrix m_prevTranslate = Matrix();
+    Matrix m_curTranslate = Matrix();
+
+    // // dirty flag
     bool m_isModelMoved = true;
     bool m_isViewMoved = true;
 
-    glm::vec2 m_viewPosAngle = { 0.0f, 0.0f };
+    // // view
+    Vector2 m_viewPosAngle = { 0.0f, 0.0f };
     int m_viewRotateDirection = -1; // 보통 회전:-1, 화면 상하 반전 시 회전:1
     float m_viewDistance = 5.0f;
+    float m_zoomLevel = 1.0f;
     
     Vector3 m_viewPos = { 0.5f, 0.5f, -m_viewDistance };
+    Vector3 m_viewLookAt = { 0.0f, 0.0f, 0.0f };
     Vector3 m_viewDir = { 0.0f, 0.0f, 1.0f };
     Vector3 m_viewUp = { 0.0f, 1.0f, 0.0f };
-    Vector3 m_viewLookAt = { 0.0f, 0.0f, 0.0f };
+
+    Vector3 m_viewNormalizedVertical = { 0.0f, 1.0f, 0.0f };
+    Vector3 m_viewNormalizedRight = { 1.0f, 0.0f, 0.0f };
 
     float m_fieldOfViewAngle = 90.0f;
-    float m_nearZ = 0.01f;
-    float m_farZ = 100.0f;
-    float m_aspectRatio = GetAspectRatio();
+    float m_nearZ = 0.01f;  // not used
+    float m_farZ = 100.0f;  // not used
+    float m_aspectRatio = GetAspectRatio(); // not used
 
     // texture
     ComPtr<ID3D11SamplerState> m_samplerState;

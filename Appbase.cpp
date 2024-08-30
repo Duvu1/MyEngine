@@ -359,9 +359,9 @@ LRESULT Appbase::MsgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         m_isScrolling = true;
 
         if (wheelValue > 0)
-            m_mouseWheelDirection = 1;
-        else if (wheelValue < 0)
             m_mouseWheelDirection = -1;
+        else if (wheelValue < 0)
+            m_mouseWheelDirection = 1;
         else
             m_mouseWheelDirection = 0;
         break;

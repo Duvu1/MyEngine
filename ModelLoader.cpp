@@ -117,6 +117,11 @@ void ModelLoader::LoadOBJ(std::string basePath, std::string filename)
     int textureCount = 0;
     int normalCount = 0;
     int indexCount = 0;
+    //vector<int> vertexCount;
+    //vector<int> textureCount;
+    //vector<int> normalCount;
+    //vector<int> indexCount;
+    //int meshIndex = -1;
 
     fin.open(basePath + filename);
 
@@ -125,15 +130,27 @@ void ModelLoader::LoadOBJ(std::string basePath, std::string filename)
     fin.get(input);
     while (!fin.eof())
     {
+        //if (input == 'o')
+        //{
+        //    meshIndex++;
+        //    vertexCount.push_back(0);
+        //    textureCount.push_back(0);
+        //    normalCount.push_back(0);
+        //    indexCount.push_back(0);
+        //}
+
         if (input == 'v')
         {
             fin.get(input);
             if (input == ' ')
                 vertexCount++;
+                //vertexCount[meshIndex]++;
             if (input == 'n')
                 normalCount++;
+                //normalCount[meshIndex]++;
             if (input == 't')
                 textureCount++;
+                //textureCount[meshIndex]++;
         }
 
         if (input == 'f')
@@ -144,6 +161,7 @@ void ModelLoader::LoadOBJ(std::string basePath, std::string filename)
             {
                 if (input == ' ')
                     indexCount++;
+                    //indexCount[meshIndex]++;
 
                 fin.get(input);
             }
@@ -161,22 +179,41 @@ void ModelLoader::LoadOBJ(std::string basePath, std::string filename)
     MeshData meshData;
 
     vector<Vector3> vertices(vertexCount);
+    //vector<Vector3> vertices;
     int vertexIndex = 0;
 
     vector<Vector3> normals(normalCount);
+    //vector<Vector3> normals;
     int normalIndex = 0;
 
     vector<Vector2> texcoords(textureCount);
+    //vector<Vector2> texcoords;
     int texcoordsIndex = 0;
 
-    vector<uint32_t> indices(indexCount);
+    vector<uint32_t> indices;
+    //vector<uint32_t> indices;
     int indexIndex = 0;
+
+    int i = -1;
 
     fin.open(basePath + filename);
 
     fin.get(input);
     while (!fin.eof())
     {
+        //if (input == 'o')
+        //{
+        //    i++;
+        //    vertices.resize(vertexCount[i]);
+        //    vertexIndex = 0;
+        //    normals.resize(normalCount[i]);
+        //    normalIndex = 0;
+        //    texcoords.resize(textureCount[i]);
+        //    texcoordsIndex = 0;
+        //    indices.resize(indexCount[i]);
+        //    indexIndex = 0;
+        //}
+
         if (input == 'v')
         {
             fin.get(input);
@@ -204,7 +241,7 @@ void ModelLoader::LoadOBJ(std::string basePath, std::string filename)
         char inputTemp = 0;
         if (input == 'f')
         {
-            int vertexNumberPerLine = 0;
+            int vertexPerLine = 0;
 
             while (input != '\n')
             {
@@ -222,28 +259,22 @@ void ModelLoader::LoadOBJ(std::string basePath, std::string filename)
 
                 meshData.vertices.push_back(vertex);
 
-                vertexNumberPerLine++;
+                vertexPerLine++;
 
                 fin.get(input);
             }
 
-            if (vertexNumberPerLine == 3)
+            for (int i = 0; i < vertexPerLine - 2; i++)
             {
-                indices.push_back(indexIndex);
-                indices.push_back(indexIndex + 1);
-                indices.push_back(indexIndex + 2);
-                indexIndex += 3;
+                indices.push_back((uint32_t)indexIndex);
+                indices.push_back((uint32_t)(indexIndex + i + 1));
+
+                if (i == 29)
+                    int a = 0;
+
+                indices.push_back((uint32_t)(indexIndex + i + 2));
             }
-            else if (vertexNumberPerLine == 4)
-            {
-                indices.push_back(indexIndex);
-                indices.push_back(indexIndex + 1);
-                indices.push_back(indexIndex + 2);
-                indices.push_back(indexIndex);
-                indices.push_back(indexIndex + 2);
-                indices.push_back(indexIndex + 3);
-                indexIndex += 4;
-            }
+            indexIndex += vertexPerLine;
         }
 
         while (input != '\n')
