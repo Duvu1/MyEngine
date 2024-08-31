@@ -102,7 +102,7 @@ private:
 
     // MVP
     Vector3 m_modelScale = Vector3(1.0f);
-    Matrix m_modelRotation = Matrix();
+    Vector3 m_modelRotation = Vector3(0.0f);
     Matrix m_modelTranslation = Matrix();
 
     // // scale
@@ -111,11 +111,12 @@ private:
     float m_curScale = 1.0f;
 
     // // rotate
-    Vector3 m_rotateAxis = m_viewPos - m_viewLookAt;
+    Vector3 m_rotateAxis = Vector3(0.0f);
     float m_prevRotateAngle = 0.0f;
     float m_curRotateAngle = 0.0f;
     Matrix m_prevRotate = Matrix();
     Matrix m_curRotate = Matrix();
+    Matrix m_finalRotate = Matrix();
 
     // // translation
     Matrix m_prevTranslate = Matrix();
@@ -125,24 +126,10 @@ private:
     bool m_isModelMoved = true;
     bool m_isViewMoved = true;
 
-    // // view
-    Vector2 m_viewPosAngle = { 0.0f, 0.0f };
-    int m_viewRotateDirection = -1; // 보통 회전:-1, 화면 상하 반전 시 회전:1
-    float m_viewDistance = 5.0f;
-    float m_zoomLevel = 1.0f;
-    
-    Vector3 m_viewPos = { 0.5f, 0.5f, -m_viewDistance };
-    Vector3 m_viewLookAt = { 0.0f, 0.0f, 0.0f };
-    Vector3 m_viewDir = { 0.0f, 0.0f, 1.0f };
-    Vector3 m_viewUp = { 0.0f, 1.0f, 0.0f };
-
-    Vector3 m_viewNormalizedVertical = { 0.0f, 1.0f, 0.0f };
-    Vector3 m_viewNormalizedRight = { 1.0f, 0.0f, 0.0f };
-
-    float m_fieldOfViewAngle = 90.0f;
-    float m_nearZ = 0.01f;  // not used
-    float m_farZ = 100.0f;  // not used
-    float m_aspectRatio = GetAspectRatio(); // not used
+    // screen
+    Vector3 m_screenViewDir = Vector3(0.0f, 0.0f, 1.0f);
+    Vector3 m_screenVerticalDir = Vector3(0.0f, 1.0f, 0.0f);
+    Vector3 m_screenRightDir = Vector3(1.0f, 0.0, 0.0f);
 
     // texture
     ComPtr<ID3D11SamplerState> m_samplerState;

@@ -326,6 +326,8 @@ LRESULT Appbase::MsgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             CreateRenderTargetView();
             CreateDepthBuffer();
             SetViewport();
+
+            m_camera.SetAspectRatio(m_width, m_height);
         }
     case WM_MOUSEMOVE:
     {

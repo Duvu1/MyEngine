@@ -34,6 +34,9 @@ ExampleApp::ExampleApp()
 
     //m_circle = std::make_unique<Circle>(Circle({ 0.0f, 0.0f }, 150.0f, { 0.0f, 1.0f, 1.0f, 1.0f }));
     //m_raytracer = std::make_unique<Raytracer>(m_width, m_height);
+
+    m_camera = Camera();
+    m_camera.SetAspectRatio(m_width, m_height);
 }
 
 ExampleApp::~ExampleApp()
@@ -337,9 +340,7 @@ void ExampleApp::Update()
             if (m_isScrolling)
             {
                 // 마우스 스크롤링으로 물체 확대 및 축소
-                
-                m_viewDistance += m_mouseWheelDirection * m_viewDistance * 0.2f;
-                m_viewDistance = clamp(m_viewDistance, 0.01f, 200.0f);
+                m_camera.SetCameraDistance(m_mouseWheelDirection);
 
                 m_isScrolling = false;
                 m_isViewMoved = true;
@@ -356,31 +357,16 @@ void ExampleApp::Update()
                     m_isDragging = true;
                     m_prevMousePos = m_curMousePos;
 
-                    if (cos(m_viewPosAngle.y) > 0)
-                        m_viewRotateDirection = -1;
-                    else
-                        m_viewRotateDirection = 1;
-
+                    m_camera.SetRotateDirection();
                 }
                 else if (m_isDragging)
                 {
                     // 드래그 시작 이후 진입하는 조건문
                     Vector2 translation = m_curMousePos - m_prevMousePos;
                     translation /= 100.0f;
-                    translation.x *= m_viewRotateDirection;
 
-                    float translationX = m_curMousePos.x - m_prevMousePos.x;
-                    float translationY = m_curMousePos.y - m_prevMousePos.y;
-
-                    m_viewPosAngle.x += translation.x;
-                    m_viewPosAngle.y += translation.y;
-
-                    printf("viewPosAngle %f %f\n", m_viewPosAngle.x, m_viewPosAngle.y);
-
-                    if (cos(m_viewPosAngle.y) > 0)
-                        m_viewUp.y = 1.0f;
-                    else
-                        m_viewUp.y = -1.0f;
+                    m_camera.SetCameraPosition(translation);
+                    m_camera.SetUpDirection();
 
                     m_prevMousePos = m_curMousePos;
                 }
@@ -423,19 +409,27 @@ void ExampleApp::Update()
             {
                 m_firstEntry = false;
 
-                m_rotateAxis = m_viewLookAt - m_viewPos;
+                m_rotateAxis = m_camera.GetViewDirection();
+                m_rotateAxis.Normalize();
                 m_prevRotateAngle = atan2(m_curMousePos.y, m_curMousePos.x);
-                m_prevRotate = m_modelRotation;
+                m_prevRotate = m_finalRotate;
 
                 //m_prevMousePos = m_curMousePos;
             }
             else
             {
                 m_curRotateAngle = atan2(m_curMousePos.y, m_curMousePos.x);
-                m_curRotate = Matrix::CreateFromAxisAngle(m_rotateAxis, m_curRotateAngle - m_prevRotateAngle);
+                //m_curRotate = Matrix::CreateFromAxisAngle(m_rotateAxis, m_curRotateAngle - m_prevRotateAngle);
 
-                m_modelRotation = m_prevRotate * m_curRotate;
+                Quaternion rotateViewDir = Quaternion::CreateFromAxisAngle(m_rotateAxis, m_curRotateAngle - m_prevRotateAngle);
+                Quaternion rotateX = Quaternion::CreateFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), m_curRotateAngle - m_prevRotateAngle);
+                Quaternion rotateY = Quaternion::CreateFromAxisAngle(Vector3(0.0f, 1.0f, 0.0f), m_curRotateAngle - m_prevRotateAngle);
+                Quaternion rotateZ = Quaternion::CreateFromAxisAngle(Vector3(0.0f, 0.0f, 1.0f), m_curRotateAngle - m_prevRotateAngle);
 
+                m_curRotate = Matrix::CreateFromQuaternion(rotateViewDir);
+                m_finalRotate = m_prevRotate * m_curRotate;
+
+                m_modelRotation = m_finalRotate.ToEuler();
                 //printf("axis %f %f %f\n", m_rotateAxis.x, m_rotateAxis.y, m_rotateAxis.z);
                 //printf("angle %f\n", m_curRotateAngle - m_prevRotateAngle);
             }
@@ -450,21 +444,22 @@ void ExampleApp::Update()
             {
                 m_firstEntry = false;
 
-                m_viewDir = m_viewLookAt - m_viewPos;
+                m_screenViewDir = m_camera.GetViewDirection();
+                m_screenViewDir.Normalize();
 
-                Vector3 tempVector = Vector3(m_viewDir.x, 0.0f, m_viewDir.z);
+                Vector3 tempVector = Vector3(m_screenViewDir.x, 0.0f, m_screenViewDir.z);
                 float f = tempVector.Length();
 
-                m_viewNormalizedVertical.x = m_viewDir.x;
-                m_viewNormalizedVertical.z = m_viewDir.z;
-                if (abs(m_viewDir.y) < 1e-3f)
-                    m_viewNormalizedVertical.y = 1.0f;
+                m_screenVerticalDir.x = m_screenViewDir.x;
+                m_screenVerticalDir.z = m_screenViewDir.z;
+                if (abs(m_screenViewDir.y) < 1e-3f)
+                    m_screenVerticalDir.y = 1.0f;
                 else
-                    m_viewNormalizedVertical.y = f * f / -m_viewDir.y;// 수직상방벡터의 방향에 영향을 받아 우측방벡터 방향이 뒤집히는 문제
+                    m_screenVerticalDir.y = f * f / -m_screenViewDir.y;// 수직상방벡터의 방향에 영향을 받아 우측방벡터 방향이 뒤집히는 문제
 
-                m_viewNormalizedVertical.Normalize();
-                m_viewNormalizedVertical.Cross(m_viewDir, m_viewNormalizedRight);
-                m_viewNormalizedRight.Normalize();
+                m_screenVerticalDir.Normalize();
+                m_screenVerticalDir.Cross(m_screenViewDir, m_screenRightDir);
+                m_screenRightDir.Normalize();
 
                 m_prevTranslate = m_modelTranslation;
 
@@ -476,15 +471,15 @@ void ExampleApp::Update()
                 float translateY = (m_curMousePos.y - m_prevMousePos.y) / 100.0f;
                 
                 m_curTranslate = Matrix::CreateTranslation(
-                    Vector3(m_viewNormalizedRight.x * translateX + m_viewNormalizedVertical.x * translateY,
-                        m_viewNormalizedVertical.y * translateY,
-                        m_viewNormalizedRight.z * translateX + m_viewNormalizedVertical.z * translateY)
+                    Vector3(m_screenRightDir.x * translateX + m_screenVerticalDir.x * translateY,
+                        m_screenVerticalDir.y * translateY,
+                        m_screenRightDir.z * translateX + m_screenVerticalDir.z * translateY)
                 );
 
                 m_modelTranslation = m_curTranslate * m_prevTranslate;
-                printf("viewdir y %f\n", m_viewDir.y);
-                printf("vertical %f %f %f\n", m_viewNormalizedVertical.x, m_viewNormalizedVertical.y, m_viewNormalizedVertical.z);
-                printf("right %f %f %f\n", m_viewNormalizedRight.x, m_viewNormalizedRight.y, m_viewNormalizedRight.z);
+                printf("viewdir y %f\n", m_screenViewDir.y);
+                printf("vertical %f %f %f\n", m_screenVerticalDir.x, m_screenVerticalDir.y, m_screenVerticalDir.z);
+                printf("right %f %f %f\n", m_screenRightDir.x, m_screenRightDir.y, m_screenRightDir.z);
             }
 
             m_isModelMoved = true;
@@ -495,7 +490,7 @@ void ExampleApp::Update()
             /////////////////////////
             // update model matrix //
             /////////////////////////
-            m_vertexConstantBufferData.model = Matrix::CreateScale(m_modelScale) * m_modelRotation * m_modelTranslation;
+            m_vertexConstantBufferData.model = Matrix::CreateScale(m_modelScale) * m_finalRotate * m_modelTranslation;
             m_vertexConstantBufferData.model = m_vertexConstantBufferData.model.Transpose();
 
             m_vertexConstantBufferData.inverseTranspose = m_vertexConstantBufferData.model.Invert();
@@ -509,15 +504,9 @@ void ExampleApp::Update()
             ////////////////////////
             // update view matrix //
             ////////////////////////
-            m_viewPos.x = m_viewDistance * cos(m_viewPosAngle.y) * sin(m_viewPosAngle.x);
-            m_viewPos.y = -m_viewDistance * sin(m_viewPosAngle.y);
-            m_viewPos.z = -m_viewDistance * cos(m_viewPosAngle.y) * cos(m_viewPosAngle.x);
-
-            m_vertexConstantBufferData.view = XMMatrixLookAtLH(m_viewPos, m_viewLookAt, m_viewUp);
-            //m_vertexConstantBufferData.view = XMMatrixLookToLH(m_viewPos, m_viewDir, m_viewUp);
+            m_vertexConstantBufferData.view = m_camera.GetViewMatrix();
             m_vertexConstantBufferData.view = m_vertexConstantBufferData.view.Transpose();
-
-            m_pixelConstantBufferData.eyePosition = m_viewPos;
+            m_pixelConstantBufferData.eyePosition = m_camera.GetCameraPosition();
 
             m_isViewMoved = false;
         }
@@ -525,8 +514,7 @@ void ExampleApp::Update()
         //////////////////////////////
         // update projection matrix //
         //////////////////////////////
-        m_vertexConstantBufferData.projection = XMMatrixPerspectiveFovLH(
-            XMConvertToRadians(m_fieldOfViewAngle), GetAspectRatio(), m_nearZ, m_farZ);
+        m_vertexConstantBufferData.projection = m_camera.GetProjectionMatrix();
         m_vertexConstantBufferData.projection = m_vertexConstantBufferData.projection.Transpose();
 
         UpdateBuffer(m_meshes[0]->vertexConstantBuffer, m_vertexConstantBufferData);
@@ -538,7 +526,7 @@ void ExampleApp::Update()
         m_vertexConstantBufferDataFocus.modelFocus = 
             Matrix::CreateScale(m_modelScale) *
             Matrix::CreateScale(1.1f) *
-            m_modelRotation *
+            m_finalRotate *
             m_modelTranslation;
         m_vertexConstantBufferDataFocus.modelFocus = m_vertexConstantBufferDataFocus.modelFocus.Transpose();
 
@@ -750,8 +738,7 @@ void ExampleApp::UpdateGUI()
         {
             ImGui::Text("Box");
             //ImGui::SliderFloat3("Mesh Position", &m_modelTranslation.x, -2.0f, 2.0f);
-            ImGui::SliderFloat("View Distance", &m_viewDistance, -10.f, 10.f);
-            ImGui::SliderFloat("Field Of View", &m_fieldOfViewAngle, 50.0f, 150.0f);
+            //ImGui::SliderFloat("Field Of View", &m_fieldOfViewAngle, 50.0f, 150.0f);
             //ImGui::SliderFloat("Near Z", &m_nearZ, 0.01f, 10.0f);
             //ImGui::SliderFloat("Far Z", &m_farZ, m_nearZ + 0.01f, 1000.0f);
             //ImGui::SliderFloat("Aspect Ratio", &m_aspectRatio, 0.1f, 3.0f);
@@ -764,7 +751,12 @@ void ExampleApp::UpdateGUI()
         else if (m_appState == APP_STATE::EDIT_ROTATE)
         {
             ImGui::Text("Rotate");
-            //ImGui::SliderFloat3("Mesh Rotate", &m_modelRotation.x, -3.0f, 3.0f);
+            ImGui::SliderFloat3("Mesh Rotate", &m_modelRotation.x, -3.15f, 3.15f);
+        }
+        else if (m_appState == APP_STATE::EDIT_TRANSLATE)
+        {
+            ImGui::Text("Rotate");
+            //ImGui::SliderFloat3("Mesh Translate", &m_modelTranslation.x, -3.15f, 3.15f);
         }
     }   
 }
@@ -806,5 +798,4 @@ void ExampleApp::KeyControl(int keyPressed)
             m_firstEntry = true;
         }
     }
-
 }

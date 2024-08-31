@@ -7,6 +7,7 @@
 
 #include "framework.h"
 #include "MyEngine.h"
+#include "Camera.h"
 
 class Appbase
 {
@@ -120,7 +121,6 @@ protected:
         m_context->Unmap(buffer.Get(), NULL);
     }
 
-    float GetAspectRatio() { return (float)m_width / m_height; };
     void Clean();
 
 public:
@@ -173,6 +173,9 @@ protected:
     ComPtr<ID3D11VertexShader> m_vertexShaderGrid;
     ComPtr<ID3D11GeometryShader> m_geometryShaderGrid;
     ComPtr<ID3D11PixelShader> m_pixelShaderGrid;
+
+    // camera
+    Camera m_camera;
 
     // mouse
     int m_mousePosX;
