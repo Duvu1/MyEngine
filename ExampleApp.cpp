@@ -343,7 +343,6 @@ void ExampleApp::Update()
                 m_camera.SetCameraDistance(m_mouseWheelDirection);
 
                 m_isScrolling = false;
-                m_isViewMoved = true;
             }
 
             if (m_isMButtonPressed)
@@ -355,24 +354,62 @@ void ExampleApp::Update()
                 {
                     // 드래그 시작 순간 진입하는 조건문
                     m_isDragging = true;
-                    m_prevMousePos = m_curMousePos;
+                    m_screenVerticalDir = m_camera.GetViewVertical();
 
-                    m_camera.SetRotateDirection();
+                    m_prevMousePos = m_curMousePos;
                 }
                 else if (m_isDragging)
                 {
                     // 드래그 시작 이후 진입하는 조건문
-                    Vector2 translation = m_curMousePos - m_prevMousePos;
-                    translation /= 100.0f;
+                    Vector2 dMousePos = m_curMousePos - m_prevMousePos;
+                    dMousePos /= 100.0f;
 
-                    m_camera.SetCameraPosition(translation);
-                    m_camera.SetUpDirection();
+                    if (m_screenVerticalDir.y < 0)
+                        dMousePos.x *= -1;
+
+                    m_camera.SetCameraRotation(dMousePos);
 
                     m_prevMousePos = m_curMousePos;
                 }
-
-                m_isViewMoved = true;
             }
+
+            m_isViewMoved = true;
+        }
+        else if (m_appState == APP_STATE::EDIT_VIEW)
+        {
+            if (m_isScrolling)
+            {
+                // 마우스 스크롤링으로 물체 확대 및 축소
+                m_camera.SetCameraDistance(m_mouseWheelDirection);
+
+                m_isScrolling = false;
+            }
+
+            if (m_isMButtonPressed)
+            {
+                // 마우스 스크롤 클릭 드래그로 특정 지점을 중심으로 시점 회전
+                m_curMousePos = GetMousePos();
+
+                if (!m_isDragging)
+                {
+                    // 드래그 시작 순간 진입하는 조건문
+                    m_isDragging = true;
+
+                    m_prevMousePos = m_curMousePos;
+                }
+                else if (m_isDragging)
+                {
+                    // 드래그 시작 이후 진입하는 조건문
+                    Vector2 dMousePos = m_curMousePos - m_prevMousePos;
+                    dMousePos /= 100.0f;
+
+                    m_camera.SetCameraPosition(dMousePos);
+
+                    m_prevMousePos = m_curMousePos;
+                }
+            }
+
+            m_isViewMoved = true;
         }
         else if (m_appState == APP_STATE::EDIT_SCALE)
         {
@@ -445,21 +482,8 @@ void ExampleApp::Update()
                 m_firstEntry = false;
 
                 m_screenViewDir = m_camera.GetViewDirection();
-                m_screenViewDir.Normalize();
-
-                Vector3 tempVector = Vector3(m_screenViewDir.x, 0.0f, m_screenViewDir.z);
-                float f = tempVector.Length();
-
-                m_screenVerticalDir.x = m_screenViewDir.x;
-                m_screenVerticalDir.z = m_screenViewDir.z;
-                if (abs(m_screenViewDir.y) < 1e-3f)
-                    m_screenVerticalDir.y = 1.0f;
-                else
-                    m_screenVerticalDir.y = f * f / -m_screenViewDir.y;// 수직상방벡터의 방향에 영향을 받아 우측방벡터 방향이 뒤집히는 문제
-
-                m_screenVerticalDir.Normalize();
-                m_screenVerticalDir.Cross(m_screenViewDir, m_screenRightDir);
-                m_screenRightDir.Normalize();
+                m_screenVerticalDir = m_camera.GetViewVertical();
+                m_screenRightDir = m_camera.GetViewRight();
 
                 m_prevTranslate = m_modelTranslation;
 
@@ -467,19 +491,20 @@ void ExampleApp::Update()
             }
             else
             {
-                float translateX = (m_curMousePos.x - m_prevMousePos.x) / 100.0f;
-                float translateY = (m_curMousePos.y - m_prevMousePos.y) / 100.0f;
-                
+                Vector2 dMousePos = m_curMousePos - m_prevMousePos;
+                dMousePos /= 100.0f;
+
                 m_curTranslate = Matrix::CreateTranslation(
-                    Vector3(m_screenRightDir.x * translateX + m_screenVerticalDir.x * translateY,
-                        m_screenVerticalDir.y * translateY,
-                        m_screenRightDir.z * translateX + m_screenVerticalDir.z * translateY)
+                    Vector3(m_screenRightDir.x * dMousePos.x + m_screenVerticalDir.x * dMousePos.y,
+                        m_screenVerticalDir.y * dMousePos.y,
+                        m_screenRightDir.z * dMousePos.x + m_screenVerticalDir.z * dMousePos.y)
                 );
 
                 m_modelTranslation = m_curTranslate * m_prevTranslate;
-                printf("viewdir y %f\n", m_screenViewDir.y);
-                printf("vertical %f %f %f\n", m_screenVerticalDir.x, m_screenVerticalDir.y, m_screenVerticalDir.z);
-                printf("right %f %f %f\n", m_screenRightDir.x, m_screenRightDir.y, m_screenRightDir.z);
+
+                //printf("viewdir y %f\n", m_screenViewDir.y);
+                //printf("vertical %f %f %f\n", m_screenVerticalDir.x, m_screenVerticalDir.y, m_screenVerticalDir.z);
+                //printf("right %f %f %f\n", m_screenRightDir.x, m_screenRightDir.y, m_screenRightDir.z);
             }
 
             m_isModelMoved = true;
@@ -737,11 +762,6 @@ void ExampleApp::UpdateGUI()
         if (m_appState == APP_STATE::HOME)
         {
             ImGui::Text("Box");
-            //ImGui::SliderFloat3("Mesh Position", &m_modelTranslation.x, -2.0f, 2.0f);
-            //ImGui::SliderFloat("Field Of View", &m_fieldOfViewAngle, 50.0f, 150.0f);
-            //ImGui::SliderFloat("Near Z", &m_nearZ, 0.01f, 10.0f);
-            //ImGui::SliderFloat("Far Z", &m_farZ, m_nearZ + 0.01f, 1000.0f);
-            //ImGui::SliderFloat("Aspect Ratio", &m_aspectRatio, 0.1f, 3.0f);
         }
         else if (m_appState == APP_STATE::EDIT_SCALE)
         {
@@ -755,8 +775,13 @@ void ExampleApp::UpdateGUI()
         }
         else if (m_appState == APP_STATE::EDIT_TRANSLATE)
         {
-            ImGui::Text("Rotate");
+            ImGui::Text("Translate");
             //ImGui::SliderFloat3("Mesh Translate", &m_modelTranslation.x, -3.15f, 3.15f);
+        }
+        else if (m_appState == APP_STATE::EDIT_VIEW)
+        {
+            ImGui::Text("View");
+            //
         }
     }   
 }
@@ -767,12 +792,21 @@ void ExampleApp::KeyControl(int keyPressed)
     {
         if (keyPressed == 27)
             DestroyWindow(m_hWnd);
+        else if (keyPressed == 'V')
+            m_appState = APP_STATE::EDIT_VIEW;
         else if (keyPressed == 'S')
             m_appState = APP_STATE::EDIT_SCALE;
         else if (keyPressed == 'R')
             m_appState = APP_STATE::EDIT_ROTATE;
         else if (keyPressed == 'T')
             m_appState = APP_STATE::EDIT_TRANSLATE;
+    }
+    else if (m_appState == APP_STATE::EDIT_VIEW)
+    {
+        if (keyPressed == 27)
+        {
+            m_appState = APP_STATE::HOME;
+        }
     }
     else if (m_appState == APP_STATE::EDIT_SCALE)
     {

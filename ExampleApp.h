@@ -11,6 +11,7 @@
 enum class APP_STATE
 {
     HOME,
+    EDIT_VIEW,
     EDIT_SCALE,
     EDIT_ROTATE,
     EDIT_TRANSLATE,
