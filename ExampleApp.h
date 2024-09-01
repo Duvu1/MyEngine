@@ -19,6 +19,17 @@ enum class APP_STATE
     END
 };
 
+enum class EDIT_STATE
+{
+    NONE,
+    DEFAULT,
+    EDIT_X,
+    EDIT_Y,
+    EDIT_Z,
+
+    END
+};
+
 struct VSConstantBufferData
 {
     Matrix model = Matrix();
@@ -73,6 +84,7 @@ private:
     bool m_drawNormal = false;
     bool m_drawWireframe = false;
     APP_STATE m_appState = APP_STATE::HOME;
+    EDIT_STATE m_editState = EDIT_STATE::DEFAULT;
     bool m_firstEntry = true;
 
     std::unique_ptr<Raytracer> m_raytracer;
@@ -102,14 +114,15 @@ private:
     ComPtr<ID3D11Buffer> m_pixelConstantBuffer2D;
 
     // MVP
-    Vector3 m_modelScale = Vector3(1.0f);
+    Vector3 m_modelScale = Vector3(1.0f);   // not used
     Vector3 m_modelRotation = Vector3(0.0f);
     Matrix m_modelTranslation = Matrix();
 
     // // scale
     float m_originToCursor = 0.0f;
-    float m_prevScale = 1.0f;
-    float m_curScale = 1.0f;
+    Matrix m_prevScale = Matrix::CreateScale(Vector3(1.0f));
+    Matrix m_curScale = Matrix::CreateScale(Vector3(1.0f));
+    Matrix m_finalScale = Matrix::CreateScale(Vector3(1.0f));
 
     // // rotate
     Vector3 m_rotateAxis = Vector3(0.0f);

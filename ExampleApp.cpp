@@ -419,7 +419,7 @@ void ExampleApp::Update()
             {
                 m_firstEntry = false;
 
-                m_prevScale = m_curScale;
+                m_prevScale = m_finalScale;
                 m_originToCursor = m_curMousePos.x * m_curMousePos.x + m_curMousePos.y * m_curMousePos.y;
 
                 //m_prevMousePos = m_curMousePos;
@@ -427,11 +427,20 @@ void ExampleApp::Update()
             else
             {
                 float originToCursor = m_curMousePos.x * m_curMousePos.x + m_curMousePos.y * m_curMousePos.y;
+                float scale = sqrt(originToCursor / m_originToCursor);
 
-                m_curScale = sqrt(originToCursor / m_originToCursor);
-                m_curScale *= m_prevScale;
+                if (m_editState == EDIT_STATE::DEFAULT)
+                    m_curScale = Matrix::CreateScale(Vector3(scale));
+                else if (m_editState == EDIT_STATE::EDIT_X)
+                    m_curScale = Matrix::CreateScale(Vector3(scale, 1.0f, 1.0f));
+                else if (m_editState == EDIT_STATE::EDIT_Y)
+                    m_curScale = Matrix::CreateScale(Vector3(1.0f, scale, 1.0f));
+                else if (m_editState == EDIT_STATE::EDIT_Z)
+                    m_curScale = Matrix::CreateScale(Vector3(1.0f, 1.0f, scale));
 
-                m_modelScale = Vector3(m_curScale, m_curScale, m_curScale);
+                m_finalScale = m_curScale * m_prevScale;
+
+                m_modelScale = m_finalScale.ToEuler();
 
                 //printf("scale %f\n", m_curScale);
             }
@@ -458,12 +467,17 @@ void ExampleApp::Update()
                 m_curRotateAngle = atan2(m_curMousePos.y, m_curMousePos.x);
                 //m_curRotate = Matrix::CreateFromAxisAngle(m_rotateAxis, m_curRotateAngle - m_prevRotateAngle);
 
-                Quaternion rotateViewDir = Quaternion::CreateFromAxisAngle(m_rotateAxis, m_curRotateAngle - m_prevRotateAngle);
-                Quaternion rotateX = Quaternion::CreateFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), m_curRotateAngle - m_prevRotateAngle);
-                Quaternion rotateY = Quaternion::CreateFromAxisAngle(Vector3(0.0f, 1.0f, 0.0f), m_curRotateAngle - m_prevRotateAngle);
-                Quaternion rotateZ = Quaternion::CreateFromAxisAngle(Vector3(0.0f, 0.0f, 1.0f), m_curRotateAngle - m_prevRotateAngle);
+                Quaternion q;
+                if (m_editState == EDIT_STATE::DEFAULT)
+                    q = Quaternion::CreateFromAxisAngle(m_rotateAxis, m_curRotateAngle - m_prevRotateAngle);
+                else if (m_editState == EDIT_STATE::EDIT_X)
+                    q = Quaternion::CreateFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), m_curRotateAngle - m_prevRotateAngle);
+                else if (m_editState == EDIT_STATE::EDIT_Y)
+                    q = Quaternion::CreateFromAxisAngle(Vector3(0.0f, 1.0f, 0.0f), m_curRotateAngle - m_prevRotateAngle);
+                else if (m_editState == EDIT_STATE::EDIT_Z)
+                    q = Quaternion::CreateFromAxisAngle(Vector3(0.0f, 0.0f, 1.0f), m_curRotateAngle - m_prevRotateAngle);
 
-                m_curRotate = Matrix::CreateFromQuaternion(rotateViewDir);
+                m_curRotate = Matrix::CreateFromQuaternion(q);
                 m_finalRotate = m_prevRotate * m_curRotate;
 
                 m_modelRotation = m_finalRotate.ToEuler();
@@ -494,11 +508,18 @@ void ExampleApp::Update()
                 Vector2 dMousePos = m_curMousePos - m_prevMousePos;
                 dMousePos /= 100.0f;
 
-                m_curTranslate = Matrix::CreateTranslation(
-                    Vector3(m_screenRightDir.x * dMousePos.x + m_screenVerticalDir.x * dMousePos.y,
-                        m_screenVerticalDir.y * dMousePos.y,
-                        m_screenRightDir.z * dMousePos.x + m_screenVerticalDir.z * dMousePos.y)
-                );
+                if (m_editState == EDIT_STATE::DEFAULT)
+                    m_curTranslate = Matrix::CreateTranslation(
+                        Vector3(m_screenRightDir.x * dMousePos.x + m_screenVerticalDir.x * dMousePos.y,
+                            m_screenVerticalDir.y * dMousePos.y,
+                            m_screenRightDir.z * dMousePos.x + m_screenVerticalDir.z * dMousePos.y)
+                    );
+                else if (m_editState == EDIT_STATE::EDIT_X)
+                    m_curTranslate = Matrix::CreateTranslation(Vector3(m_screenRightDir.x * dMousePos.x + m_screenVerticalDir.x * dMousePos.y, 0.0f, 0.0f));
+                else if (m_editState == EDIT_STATE::EDIT_Y)
+                    m_curTranslate = Matrix::CreateTranslation(Vector3(0.0f, m_screenVerticalDir.y * dMousePos.y, 0.0f));
+                else if (m_editState == EDIT_STATE::EDIT_Z)
+                    m_curTranslate = Matrix::CreateTranslation(Vector3(0.0f, 0.0f, m_screenRightDir.z * dMousePos.x + m_screenVerticalDir.z * dMousePos.y));
 
                 m_modelTranslation = m_curTranslate * m_prevTranslate;
 
@@ -515,7 +536,7 @@ void ExampleApp::Update()
             /////////////////////////
             // update model matrix //
             /////////////////////////
-            m_vertexConstantBufferData.model = Matrix::CreateScale(m_modelScale) * m_finalRotate * m_modelTranslation;
+            m_vertexConstantBufferData.model = m_finalScale * m_finalRotate * m_modelTranslation;
             m_vertexConstantBufferData.model = m_vertexConstantBufferData.model.Transpose();
 
             m_vertexConstantBufferData.inverseTranspose = m_vertexConstantBufferData.model.Invert();
@@ -766,7 +787,7 @@ void ExampleApp::UpdateGUI()
         else if (m_appState == APP_STATE::EDIT_SCALE)
         {
             ImGui::Text("Scale");
-            ImGui::SliderFloat("Mesh Scale", &m_curScale, 0.0f, 10.0f);
+            ImGui::SliderFloat3("Mesh Scale", &m_modelScale.x, 0.0f, 10.0f);
         }
         else if (m_appState == APP_STATE::EDIT_ROTATE)
         {
@@ -806,6 +827,7 @@ void ExampleApp::KeyControl(int keyPressed)
         if (keyPressed == 27)
         {
             m_appState = APP_STATE::HOME;
+            m_editState = EDIT_STATE::DEFAULT;
         }
     }
     else if (m_appState == APP_STATE::EDIT_SCALE)
@@ -813,7 +835,20 @@ void ExampleApp::KeyControl(int keyPressed)
         if (keyPressed == 27)
         {
             m_appState = APP_STATE::HOME;
+            m_editState = EDIT_STATE::DEFAULT;
             m_firstEntry = true;
+        }
+        else if (keyPressed == 'X')
+        {
+            m_editState = EDIT_STATE::EDIT_X;
+        }
+        else if (keyPressed == 'Y')
+        {
+            m_editState = EDIT_STATE::EDIT_Y;
+        }
+        else if (keyPressed == 'Z')
+        {
+            m_editState = EDIT_STATE::EDIT_Z;
         }
     }
     else if (m_appState == APP_STATE::EDIT_ROTATE)
@@ -821,7 +856,20 @@ void ExampleApp::KeyControl(int keyPressed)
         if (keyPressed == 27)
         {
             m_appState = APP_STATE::HOME;
+            m_editState = EDIT_STATE::DEFAULT;
             m_firstEntry = true;
+        }
+        else if (keyPressed == 'X')
+        {
+            m_editState = EDIT_STATE::EDIT_X;
+        }
+        else if (keyPressed == 'Y')
+        {
+            m_editState = EDIT_STATE::EDIT_Y;
+        }
+        else if (keyPressed == 'Z')
+        {
+            m_editState = EDIT_STATE::EDIT_Z;
         }
     }
     else if (m_appState == APP_STATE::EDIT_TRANSLATE)
@@ -829,7 +877,20 @@ void ExampleApp::KeyControl(int keyPressed)
         if (keyPressed == 27)
         {
             m_appState = APP_STATE::HOME;
+            m_editState = EDIT_STATE::DEFAULT;
             m_firstEntry = true;
+        }
+        else if (keyPressed == 'X')
+        {
+            m_editState = EDIT_STATE::EDIT_X;
+        }
+        else if (keyPressed == 'Y')
+        {
+            m_editState = EDIT_STATE::EDIT_Y;
+        }
+        else if (keyPressed == 'Z')
+        {
+            m_editState = EDIT_STATE::EDIT_Z;
         }
     }
 }
